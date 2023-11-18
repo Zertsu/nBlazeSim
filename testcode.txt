@@ -1,0 +1,18 @@
+LOAD s0, 40
+LOAD s2, 02
+
+MULT8 s2, s0
+CALL div
+
+LOAD s3, 20
+SUB s3, s0
+LOAD s1, s0
+
+end: JUMP end
+
+div:
+SR0 s2
+SR0 s2
+SR0 s2
+LOAD s0, s2
+RETURN

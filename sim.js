@@ -84,16 +84,16 @@ class Sim {
     
         switch (instCode) {
             // Data moving inst
-            case 0b000001: s.reg[sX] = kk                   ; break // LOAD sX, kk
-            case 0b000000: s.reg[sX] = s.reg[sY]            ; break // LOAD sX, sY
-            case 0b001001: s.reg[sX] = s.pin[kk].shift()    ; break // INPUT sX, PP
-            case 0b001000: s.reg[sX] = s.pin[sY].shift()    ; break // INPUT sX, (sY)
-            case 0b001011: s.reg[sX] = s.dmem[sa]           ; break // FETCH sX, sa
-            case 0b001010: s.reg[sX] = s.dmem[sY]           ; break // FETCH sX, (sY)
-            case 0b101101: ppush(kk, s.reg[sX])             ; break // OUTPUT sX, PP
-            case 0b101100: ppush(s.reg[sY], s.reg[sX])      ; break // OUTPUT sX, (sY)
-            case 0b101111: s.dmem[sa] = s.reg[sX]           ; break // STORE sX, sa
-            case 0b101110: s.dmem[sY] = s.reg[sX]           ; break // STORE sX, (sY)
+            case 0b000001: s.reg[sX] = kk                       ; break // LOAD sX, kk
+            case 0b000000: s.reg[sX] = s.reg[sY]                ; break // LOAD sX, sY
+            case 0b001001: s.reg[sX] = s.pin[kk].shift()        ; break // INPUT sX, PP
+            case 0b001000: s.reg[sX] = s.pin[s.reg[sY]].shift() ; break // INPUT sX, (sY)
+            case 0b001011: s.reg[sX] = s.dmem[sa]               ; break // FETCH sX, sa
+            case 0b001010: s.reg[sX] = s.dmem[s.reg[sY]]        ; break // FETCH sX, (sY)
+            case 0b101101: ppush(kk, s.reg[sX])                 ; break // OUTPUT sX, PP
+            case 0b101100: ppush(s.reg[sY], s.reg[sX])          ; break // OUTPUT sX, (sY)
+            case 0b101111: s.dmem[sa] = s.reg[sX]               ; break // STORE sX, sa
+            case 0b101110: s.dmem[s.reg[sY]] = s.reg[sX]        ; break // STORE sX, (sY)
     
             // Arith inst
             case 0b000011: updFlags("z" , s.reg[sX] &= kk                                       ); break // AND sX, kk

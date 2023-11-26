@@ -169,7 +169,7 @@ class Comp {
                     lableQ.push(lsplit[0].trim())
                     comm = lsplit[1].trim()
                 } else {
-                    comm = line
+                    comm = line.trim()
                 }
                 if(comm === "") {
                     continue
@@ -191,5 +191,105 @@ class Comp {
             }
             this.bytecode[i] |= this.labels[this.jumpTarg[i]]
         }
+        this.lineLabels = {}
+        for (const key in this.labels) {
+            this.lineLabels[this.labels[key]] = key
+        }
     }
+
+    static bytecode2bin(code) {
+        let n = code.toString(2);
+        n = "000000000000000000".substr(n.length) + n;
+        return n
     }
+
+    #rOpCodes = {
+        0b000001: "LOAD sX, kk",
+        0b000000: "LOAD sX, sY",
+        0b001001: "INPUT sX, PP",
+        0b001000: "INPUT sX, (sY)",
+        0b001011: "FETCH sX, sa",
+        0b001010: "FETCH sX, (sY)",
+        0b101101: "OUTPUT sX, PP",
+        0b101100: "OUTPUT sX, (sY)",
+        0b101111: "STORE sX, sa",
+        0b101110: "STORE sX, (sY)",
+        0b000011: "AND sX, kk",
+        0b000010: "AND sX, sY",
+        0b000101: "OR sX, kk",
+        0b000100: "OR sX, sY",
+        0b000111: "XOR sX, kk",
+        0b000110: "XOR sX, sY",
+        0b001101: "MULT8 sX, kk",
+        0b001100: "MULT8 sX, sY",
+        0b011101: "COMP sX, kk",
+        0b011100: "COMP sX, sY",
+        0b010001: "ADD sX, kk",
+        0b010000: "ADD sX, sY",
+        0b010011: "ADDCY sX, kk",
+        0b010010: "ADDCY sX, sY",
+        0b011001: "SUB sX, kk",
+        0b011000: "SUB sX, sY",
+        0b011011: "SUBCY sX, kk",
+        0b011010: "SUBCY sX, sY",
+        0b010100: "SR",
+        0b100010: "JUMP addr",
+        0b110010: "JUMP Z, addr",
+        0b110110: "JUMP NZ, addr",
+        0b111010: "JUMP C, addr",
+        0b111110: "JUMP NC, addr",
+        0b100000: "CALL addr",
+        0b110000: "CALL Z, addr",
+        0b110100: "CALL NZ, addr",
+        0b111000: "CALL C, addr",
+        0b111100: "CALL NC, addr",
+        0b100101: "RETURN",
+        0b110001: "RETURN Z",
+        0b110101: "RETURN NZ",
+        0b111001: "RETURN C",
+        0b111101: "RETURN NC"
+    }
+
+    bytecode2str(code) {
+        let txt = this.#rOpCodes[code >> 12]
+        const sX = code >> 8 & 0xF
+        const sY = code >> 4 & 0xF
+        const kk = code & 0xFF
+        const sa = code & 0b111111
+        const aluext = code & 0xF
+        const addr = code & 0b111111111111
+        const label = this.lineLabels[addr]
+        if (txt == "SR") {
+            const c = aluext % 0b111
+            if (aluext & 0b1000) {
+                // SRR
+                switch (c) {
+                    case 0b110: txt = "SR0"
+                    case 0b111: txt = "SR1"
+                    case 0b010: txt = "SRX"
+                    case 0b000: txt = "SRA"
+                    case 0b100: txt = "RR"
+                    default: break 
+                }
+            } else {
+                // SRL
+                switch (c) {
+                    case 0b110:txt = "SL0"
+                    case 0b111:txt = "SL1"
+                    case 0b100:txt = "SLX"
+                    case 0b000:txt = "SLA"
+                    case 0b010:txt = "RL"
+                    default: break
+                }
+            }
+            txt += " sX"
+        }
+        txt = txt
+            .replace("sX", "s" + sX)
+            .replace("sY", "s" + sY)
+            .replace("kk", kk)
+            .replace("sa", sa)
+            .replace("addr", label ? label : addr)
+        return txt
+    }
+}

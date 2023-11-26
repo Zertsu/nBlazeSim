@@ -1,0 +1,15 @@
+start:
+STORE s0, (s1)
+ADD s1, 1
+COMP s1, 20
+JUMP C, up
+COMP s1, 21
+JUMP C, start
+COMP s1, 3F
+JUMP NC, end
+SUB s0, 8
+JUMP start
+up: ADD s0, 8
+JUMP start
+end: STORE s0, s(s1)
+endend: JUMP endend

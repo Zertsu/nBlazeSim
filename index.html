@@ -11,8 +11,34 @@
     <script src="sim.js" defer></script>
 </head>
 <body>
-    <input type="button" value="Compile", id="compBtn"><br>
+    <input type="button" value="Compile" id="compBtn">
+    <br>
     <textarea name="source" id="source" cols="30" rows="10"></textarea>
     <textarea name="bytecode" id="bytecode" cols="30" rows="10"></textarea>
+    <div id="sim" style="display: none;">
+        <input type="button" value="Step" id="stepBtn">
+        <input type="button" value="Step 10" id="step10Btn">
+        <input type="button" value="Run", id="runBtn">
+        <div id="pmemOuter" class="tOuter">
+            <div>Program Memory</div>
+            <div id="pmem" class="tCont"></div>
+        </div>
+        <div id="dmemOuter" class="tOuter">
+            <div>Data Memory</div>
+            <div id="dmem" class="tCont"></div>
+        </div>
+        <div id="regOuter" class="tOuter">
+            <div>Registers</div>
+            <div id="reg" class="tCont"></div>
+        </div>
+        <div id="stackOuter" class="tOuter">
+            <div>Call Stack</div>
+            <div id="stack" class="tCont"></div>
+        </div>
+        <div id="specOuter" class="tOuter">
+            <div>Other Registers</div>
+            <div id="spec" class="tCont"></div>
+        </div>
+    </div>
 </body>
 </html>

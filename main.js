@@ -4,9 +4,8 @@ var code;
 // HTML Hooks
 
 document.getElementById("compBtn").addEventListener("click" ,e => {
-    let bytecode = translateCode(document.getElementById("source").value)
-    document.getElementById("bytecode").value = bytecodeToStr(bytecode)
-    code = bytecode.map(x => x[0])
+    code = new comp(document.getElementById("source").value)
+    document.getElementById("bytecode").value = bytecodeToStr(code.bytecode)
 })
 
 
@@ -16,7 +15,7 @@ document.getElementById("compBtn").addEventListener("click" ,e => {
 function bytecodeToStr(c) {
     var o = ""
     for (let i = 0; i < c.length; i++) {
-        const e = c[i][0];
+        const e = c[i];
         var n = e.toString(2);
         n = "000000000000000000".substr(n.length) + n;
         o += n + "\n"
@@ -26,9 +25,15 @@ function bytecodeToStr(c) {
 
 // Translator
 
-var defaultConstBase = 16
+class comp {
 
-function tokenize(str) {
+static defaultConstBase = 16
+constructor(code) {
+    this.src = code
+    this.#translateCode()
+}
+
+#tokenize(str) {
     const o = str.split(",")
     for (let i = 0; i < o.length; i++) {
         o[i] = o[i].trim()
@@ -36,7 +41,7 @@ function tokenize(str) {
     return o
 }
 
-function parseConst(str) {
+#parseConst(str) {
     const bases = {
         "0b": 2,
         "0o": 8,
@@ -45,41 +50,40 @@ function parseConst(str) {
     }
     var base = bases[str.substring(0, 2)]
     if (base == undefined) {
-        return parseInt(str, defaultConstBase)
+        return parseInt(str, comp.defaultConstBase)
     }
     return parseInt(str.substring(2), base)
 }
 
-
-function syorkk(args) {
+#syorkk(args) {
     var o = 0
     o |= parseInt(args[0].substring(1)) << 8
     if (args[1][0] == 's') {
         o |= parseInt(args[1].substring(1)) << 4
     } else {
-        o |= parseConst(args[1]) | 1 << 12
+        o |= this.#parseConst(args[1]) | 1 << 12
     }
     return o
 }
 
-function handleT(opcode, str) {
+#handleT(opcode, str) {
     var o = opcode << 12
-    const args = tokenize(str)
-    o |= syorkk(args)
+    const args = this.#tokenize(str)
+    o |= this.#syorkk(args)
     return [o, null]
 }
 
-function handleSR(ext, str) {
+#handleSR(ext, str) {
     var o = 0b010100 << 12
     o |= parseInt(str.trim().substring(1)) << 8
     o |= ext
     return [o, null]
 }
 
-function handleJmp(type, str) {
+#handleJmp(type, str) {
     var o = 0b100000 << 12
     var jumpLab = null
-    const args = tokenize(str)
+    const args = this.#tokenize(str)
     switch (type) {
         case "jump":
             o |= 0b000010 << 12
@@ -132,73 +136,88 @@ function handleJmp(type, str) {
     return [o, args[1]]
 }
 
-const opCodes = {
-    "LOAD"       : str => handleT(0b000000, str),
-    "INPUT"      : str => handleT(0b001000, str),
-    "FETCH"      : str => handleT(0b001010, str),
-    "OUTPUT"     : str => handleT(0b101100, str),
-    "STORE"      : str => handleT(0b101110, str),
-    "AND"        : str => handleT(0b000010, str),
-    "OR"         : str => handleT(0b000100, str),
-    "XOR"        : str => handleT(0b000110, str),
-    "MULT8"      : str => handleT(0b001100, str),
-    "COMP"       : str => handleT(0b011100, str),
-    "ADD"        : str => handleT(0b010000, str),
-    "ADDCY"      : str => handleT(0b010010, str),
-    "SUB"        : str => handleT(0b011000, str),
-    "SUBCY"      : str => handleT(0b011010, str),
-    "SR0"        : str => handleSR(0b1110, str),
-    "SR1"        : str => handleSR(0b1111, str),
-    "SRX"        : str => handleSR(0b1010, str),
-    "SRA"        : str => handleSR(0b1000, str),
-    "RR"         : str => handleSR(0b1100, str),
-    "SL0"        : str => handleSR(0b0110, str),
-    "SL1"        : str => handleSR(0b0111, str),
-    "SLX"        : str => handleSR(0b0100, str),
-    "SLA"        : str => handleSR(0b0000, str),
-    "RL"         : str => handleSR(0b0010, str),
-    "JUMP"       : str => handleJmp("jump", str),
-    "CALL"       : str => handleJmp("call", str),
-    "RETURN"     : str => handleJmp("return", str),
-    "RETURNI"    : str => handleJmp("reti", str),
-    "ENINTERR"   : str => handleJmp("eni", str),
-    "DISINTERRR" : str => handleJmp("disi", str)
+#opCodes = {
+    "LOAD"       : str => this.#handleT(0b000000, str),
+    "INPUT"      : str => this.#handleT(0b001000, str),
+    "FETCH"      : str => this.#handleT(0b001010, str),
+    "OUTPUT"     : str => this.#handleT(0b101100, str),
+    "STORE"      : str => this.#handleT(0b101110, str),
+    "AND"        : str => this.#handleT(0b000010, str),
+    "OR"         : str => this.#handleT(0b000100, str),
+    "XOR"        : str => this.#handleT(0b000110, str),
+    "MULT8"      : str => this.#handleT(0b001100, str),
+    "COMP"       : str => this.#handleT(0b011100, str),
+    "ADD"        : str => this.#handleT(0b010000, str),
+    "ADDCY"      : str => this.#handleT(0b010010, str),
+    "SUB"        : str => this.#handleT(0b011000, str),
+    "SUBCY"      : str => this.#handleT(0b011010, str),
+    "SR0"        : str => this.#handleSR(0b1110, str),
+    "SR1"        : str => this.#handleSR(0b1111, str),
+    "SRX"        : str => this.#handleSR(0b1010, str),
+    "SRA"        : str => this.#handleSR(0b1000, str),
+    "RR"         : str => this.#handleSR(0b1100, str),
+    "SL0"        : str => this.#handleSR(0b0110, str),
+    "SL1"        : str => this.#handleSR(0b0111, str),
+    "SLX"        : str => this.#handleSR(0b0100, str),
+    "SLA"        : str => this.#handleSR(0b0000, str),
+    "RL"         : str => this.#handleSR(0b0010, str),
+    "JUMP"       : str => this.#handleJmp("jump", str),
+    "CALL"       : str => this.#handleJmp("call", str),
+    "RETURN"     : str => this.#handleJmp("return", str),
+    "RETURNI"    : str => this.#handleJmp("reti", str),
+    "ENINTERR"   : str => this.#handleJmp("eni", str),
+    "DISINTERRR" : str => this.#handleJmp("disi", str)
 }
 
-
-function translateCode(src) {
-    var lines = src
-        .trim()
-        .replace(";", "\n")
+#translateCode() {
+    let lines = this.src
         .replace("(", "")
         .replace(")", "")
+        .replace(/(\/\/.*)\n/g, "")
         .replace(/([ \t]*\n[ \t]*)/gm, "\n")
-        .replace(/(^\n)/gm, "")
-        .replace(/(:\n)/gm, ": ")
         .split('\n')
-    var o = []
-    var olen = 0
-    var labels = {}
+    
+    this.bytecode = []
+    this.labels = {}
+    this.jumpTarg = []
+    this.addr2src = []
+
+    let lableQ = []
     for (let i = 0; i < lines.length; i++) {
-        const line = lines[i].split("//")[0]
-        const lsplit = line.split(":")
-        var comm
-        if (lsplit.length > 1) {
-            labels[lsplit[0].trim()] = i
-            comm = lsplit[1].trim().split(" ")
-        } else {
-            comm = line.split(" ")
+        const fullline = lines[i].split(";")
+        for (let j = 0; j < fullline.length; j++) {
+            const line = fullline[j];
+            if (line === "") {continue}
+            const lsplit = line.split(":")
+            let comm
+            if (lsplit.length > 1) {
+                lableQ.push(lsplit[0].trim())
+                comm = lsplit[1].trim()
+            } else {
+                comm = line
+            }
+            if(comm === "") {
+                continue
+            }
+            comm = comm.split(" ")
+            let inst, jtar
+            [inst, jtar] = this.#opCodes[comm[0]](comm.slice(1).join(' '))
+            this.jumpTarg[this.bytecode.length] = jtar
+            while (lableQ.length) {
+                this.labels[lableQ.pop()] = this.bytecode.length
+            }
+            this.addr2src[this.bytecode.length] = i
+            this.bytecode.push(inst)
         }
-        o[olen++] = opCodes[comm[0]](comm.slice(1).join(' '))
     }
-    for (let i = 0; i < olen; i++) {
-        if (o[i][1] == null) {
+    for (let i = 0; i < this.bytecode.length; i++) {
+        if (this.jumpTarg[i] == null) {
             continue
         }
-        o[i][0] |= labels[o[i][1]]
+        this.bytecode[i] |= this.labels[this.jumpTarg[i]]
     }
-    return o
 }
+} // comp
 
 
 // Sim
@@ -339,4 +358,4 @@ runCycle() {
     }
 }
 
-}
+} // SimState

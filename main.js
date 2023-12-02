@@ -12,32 +12,40 @@ document.getElementById("compBtn").addEventListener("click" ,e => {
     genSim(prog)
     updateSimUI(sim)
 })
+
+
+
 document.getElementById("stepBtn").addEventListener("click", e => {
     sim.runCycle()
     updateSimUI(sim)
 })
 document.getElementById("step10Btn").addEventListener("click", e =>{
-    let interValId
     let count = 0
-    interValId = setInterval(() => {
+    autoRunHan(true)
+    simUI.interID = setInterval(() => {
         sim.runCycle()
         updateSimUI(sim)
         if (++count == 10) {
-            clearInterval(interValId)
+            clearInterval(simUI.interID)
+            autoRunHan(false)
         }
     }, 50);
 })
 document.getElementById("runBtn").addEventListener("click", e => {
-    let interValId
-    let lastPC
-    interValId = setInterval(() => {
+    autoRunHan(true)
+    simUI.interID = setInterval(() => {
         sim.runCycle()
         updateSimUI(sim)
-        if (lastPC == sim.PC) {
-            clearInterval(interValId)
+        if (simUI.lastPC == sim.PC) {
+            clearInterval(simUI.interID)
+            autoRunHan(false)
         }
-        lastPC = sim.PC
+        simUI.lastPC = sim.PC
     }, 50);
+})
+document.getElementById("stopBtn").addEventListener("click", e => {
+    clearInterval(simUI.interID)
+    autoRunHan(false)
 })
 document.getElementById("intBtn").addEventListener("click", e => {
     sim.trigInt()
@@ -45,6 +53,23 @@ document.getElementById("intBtn").addEventListener("click", e => {
     sim.disInt()
     updateSimUI(sim)
 })
+document.getElementById("resetBtn").addEventListener("click", e => {
+    if (simUI.interID) {
+        clearInterval(simUI.interID)
+    }
+    sim.reset()
+    autoRunHan(false)
+    updateSimUI(sim)
+})
+
+function autoRunHan(s) {
+    const b = simUI.btn
+    b.stepBtn.disabled = s
+    b.step10Btn.disabled = s
+    b.runBtn.disabled = s
+    b.stopBtn.disabled = !s
+}
+
 
 function bytecodeToStr(c) {
     var o = ""
@@ -75,7 +100,7 @@ function updateSimUI(s) {
     simUI.ZF.innerText = sim.ZF
     simUI.CF.innerText = sim.CF
     simUI.intEn.innerText = sim.intEn
-    simUI.intBtn.disabled = ! sim.intEn
+    simUI.btn.intBtn.disabled = ! sim.intEn
 
     const pmem = document.getElementById("pmem")
     disableClass(pmem, "active")
@@ -146,7 +171,10 @@ function genSim(p) {
         pmem.appendChild(c)
         simUI.pmem[i] = c.lastChild
     }
-    simUI.intBtn = document.getElementById("intBtn")
+    simUI.btn = {}
+    for (const b of ["stepBtn", "step10Btn", "runBtn", "stopBtn", "intBtn"]) {
+        simUI.btn[b] = document.getElementById(b)
+    }
     document.getElementById("sim").style = ""
 }
 

@@ -15,6 +15,18 @@ class Sim {
         this.intEn = true
         this.intrq = false
     }
+
+    reset() {
+        this.dmem = new Uint16Array(64)
+        this.stack = []
+        this.reg = new Uint16Array(16)
+        this.PC = 0
+        this.ZF = false
+        this.CF = false
+        this.pout = []
+        this.intEn = true
+        this.intrq = false
+    }
     
     trigInt() {
         this.intrq = true

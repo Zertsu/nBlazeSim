@@ -12,10 +12,27 @@ class Sim {
         this.CF = false
         this.pin = []
         this.pout = []
+        this.intEn = true
+        this.intrq = false
     }
     
+    trigInt() {
+        this.intrq = true
+    }
+
+    disInt() {
+        this.intrq = false
+    }
+
     runCycle() {
         const s = this
+        
+        if (s.intEn && s.intrq) {
+            s.stack.push(s.PC)
+            s.PC = 0x3FF
+            return
+        }
+
         const inst = s.pmem[s.PC++]
         const instCode = inst >> 12
         const sX = inst >> 8 & 0xF
@@ -24,6 +41,7 @@ class Sim {
         const sa = inst & 0b111111
         const aluext = inst & 0xF
         const addr = inst & 0b111111111111
+        const intEn = inst & 1
         
         const ppush = (pID, data) => {
             if (s.pout[pID] == undefined) {
@@ -81,6 +99,9 @@ class Sim {
         const hanRet = () => {
             return s.stack.pop()
         }
+        const hanInt = () => {
+            s.intEn = intEn == 1
+        }
     
         switch (instCode) {
             // Data moving inst
@@ -108,12 +129,12 @@ class Sim {
             case 0b011100: s.CF = s.reg[sY] > s.reg[sX]; s.ZF = s.reg[sY] == s.reg[sX]           ; break // COMP sX, sY
             case 0b010001: updFlags("zc", s.reg[sX] += kk                                       ); break // ADD sX, kk
             case 0b010000: updFlags("zc", s.reg[sX] += s.reg[sY]                                ); break // ADD sX, sY
-            case 0b010011: updFlags("zc", s.reg[sX] += kk + s.CF ? 1 : 0                        ); break // ADDCY sX, kk
-            case 0b010010: updFlags("zc", s.reg[sX] += s.reg[sY] + s.CF ? 1 : 0                 ); break // ADDCY sX, sY
+            case 0b010011: updFlags("zc", s.reg[sX] += kk + (s.CF ? 1 : 0)                      ); break // ADDCY sX, kk
+            case 0b010010: updFlags("zc", s.reg[sX] += s.reg[sY] + (s.CF ? 1 : 0)               ); break // ADDCY sX, sY
             case 0b011001: updFlags("zc", s.reg[sX] -= kk                                       ); break // SUB sX, kk
             case 0b011000: updFlags("zc", s.reg[sX] -= s.reg[sY]                                ); break // SUB sX, sY
-            case 0b011011: updFlags("zc", s.reg[sX] -= kk + s.CF                                ); break // SUBCY sX, kk
-            case 0b011010: updFlags("zc", s.reg[sX] -= s.reg[sY] + s.CF                         ); break // SUBCY sX, sY
+            case 0b011011: updFlags("zc", s.reg[sX] -= kk + (s.CF ? 1 : 0)                      ); break // SUBCY sX, kk
+            case 0b011010: updFlags("zc", s.reg[sX] -= s.reg[sY] + (s.CF ? 1 : 0)               ); break // SUBCY sX, sY
             case 0b010100: s.reg[sX] = hanSR(s.reg[sX], aluext)                                  ; break // SR
     
             // Branching inst
@@ -132,6 +153,8 @@ class Sim {
             case 0b110101: s.PC = s.ZF ? s.PC : hanRet()    ; break // RETURN NZ
             case 0b111001: s.PC = s.CF ? hanRet() : s.PC    ; break // RETURN C
             case 0b111101: s.PC = s.CF ? s.PC : hanRet()    ; break // RETURN NC
+            case 0b101001: hanInt(); s.PC = hanRet()        ; break // RETURNI
+            case 0b101000: hanInt()                         ; break // ENINTERR / DISINTERR
             default: break;
         }
     }

@@ -1,5 +1,7 @@
 start:
+DISINTERR
 STORE s0, (s1)
+ENINTERR
 ADD s1, 1
 COMP s1, 20
 JUMP C, up
@@ -13,3 +15,9 @@ up: ADD s0, 8
 JUMP start
 end: STORE s0, s(s1)
 endend: JUMP endend
+
+inthan:
+ADD s15, 1
+RETURN
+ADDRESS 3FF
+JUMP inthan

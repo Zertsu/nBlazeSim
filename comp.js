@@ -83,16 +83,16 @@ class Comp {
                     o |= 0b000101 << 12
                     return [o, null]
                 }
-                o |= 0b000001
+                o |= 0b000001 << 12
                 break
             case "reti":
-                o |= 0b001001
+                o |= 0b001001 << 12
                 o |= args[0] == "E" ? 1 : 0
                 return [o, null]
             case "eni":
-                o |= 0b000001
+                o |= 1
             case "disi":
-                o |= 0b001000
+                o |= 0b001000 << 12
                 return [o, null]
             default:
                 break
@@ -153,7 +153,7 @@ class Comp {
         "RETURN"     : str => this.#handleJmp("return", str),
         "RETURNI"    : str => this.#handleJmp("reti", str),
         "ENINTERR"   : str => this.#handleJmp("eni", str),
-        "DISINTERRR" : str => this.#handleJmp("disi", str)
+        "DISINTERR"  : str => this.#handleJmp("disi", str)
     }
 
     #dirs = {
@@ -280,7 +280,9 @@ class Comp {
         0b110001: "RETURN Z",
         0b110101: "RETURN NZ",
         0b111001: "RETURN C",
-        0b111101: "RETURN NC"
+        0b111101: "RETURN NC",
+        0b101001: "RETURNI",
+        0b101000: "INTERR"
     }
 
     bytecode2str(code) {
@@ -291,32 +293,43 @@ class Comp {
         const sa = code & 0b111111
         const aluext = code & 0xF
         const addr = code & 0b111111111111
+        const intEN = code & 1
         const label = this.lineLabels[addr]
-        if (txt == "SR") {
-            const c = aluext % 0b111
-            if (aluext & 0b1000) {
-                // SRR
-                switch (c) {
-                    case 0b110: txt = "SR0"
-                    case 0b111: txt = "SR1"
-                    case 0b010: txt = "SRX"
-                    case 0b000: txt = "SRA"
-                    case 0b100: txt = "RR"
-                    default: break 
+        switch (txt) {
+            case "SR":
+                const c = aluext % 0b111
+                if (aluext & 0b1000) {
+                    // SRR
+                    switch (c) {
+                        case 0b110: txt = "SR0"
+                        case 0b111: txt = "SR1"
+                        case 0b010: txt = "SRX"
+                        case 0b000: txt = "SRA"
+                        case 0b100: txt = "RR"
+                        default: break 
+                    }
+                } else {
+                    // SRL
+                    switch (c) {
+                        case 0b110:txt = "SL0"
+                        case 0b111:txt = "SL1"
+                        case 0b100:txt = "SLX"
+                        case 0b000:txt = "SLA"
+                        case 0b010:txt = "RL"
+                        default: break
+                    }
                 }
-            } else {
-                // SRL
-                switch (c) {
-                    case 0b110:txt = "SL0"
-                    case 0b111:txt = "SL1"
-                    case 0b100:txt = "SLX"
-                    case 0b000:txt = "SLA"
-                    case 0b010:txt = "RL"
-                    default: break
-                }
-            }
-            txt += " sX"
+                txt += " sX"
+                break
+            case "RETURNI":
+                txt += intEN == 1 ? " E" : " D"
+                break
+            case "INTERR":
+                txt = intEN == 1 ? "INTERR" : "DISINTERR"
+                break
+            default: break
         }
+
         txt = txt
             .replace("sX", "s" + sX)
             .replace("sY", "s" + sY)

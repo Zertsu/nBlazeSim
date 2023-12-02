@@ -39,6 +39,12 @@ document.getElementById("runBtn").addEventListener("click", e => {
         lastPC = sim.PC
     }, 50);
 })
+document.getElementById("intBtn").addEventListener("click", e => {
+    sim.trigInt()
+    sim.runCycle()
+    sim.disInt()
+    updateSimUI(sim)
+})
 
 function bytecodeToStr(c) {
     var o = ""
@@ -68,6 +74,8 @@ function updateSimUI(s) {
     simUI.PC.innerText = sim.PC
     simUI.ZF.innerText = sim.ZF
     simUI.CF.innerText = sim.CF
+    simUI.intEn.innerText = sim.intEn
+    simUI.intBtn.disabled = ! sim.intEn
 
     const pmem = document.getElementById("pmem")
     disableClass(pmem, "active")
@@ -101,7 +109,7 @@ function genSim(p) {
     }
     const spec = document.getElementById("spec")
     spec.innerHTML = ''
-    for (const e of ["PC", "ZF", "CF"]) {
+    for (const e of ["PC", "ZF", "CF", "intEn"]) {
         const c = genCell(e, e, 0)
         spec.appendChild(c)
         simUI[e] = c.lastChild
@@ -138,6 +146,7 @@ function genSim(p) {
         pmem.appendChild(c)
         simUI.pmem[i] = c.lastChild
     }
+    simUI.intBtn = document.getElementById("intBtn")
     document.getElementById("sim").style = ""
 }
 

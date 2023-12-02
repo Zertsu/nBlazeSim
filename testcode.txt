@@ -1,18 +1,27 @@
-LOAD s0, 40
-LOAD s2, 02
+NAMEREG s0, i
+NAMEREG s1, j
+NAMEREG s2, k
 
-MULT8 s2, s0
+JUMP start
+
+ADDRESS 20
+start:
+LOAD i, 40
+LOAD k, 02
+
+MULT8 k, i
 CALL div
 
 LOAD s3, 20
-SUB s3, s0
-LOAD s1, s0
+SUB s3, i
+LOAD j, i
 
 end: JUMP end
 
+ADDRESS 10
 div:
-SR0 s2
-SR0 s2
-SR0 s2
-LOAD s0, s2
+SR0 k
+SR0 k
+SR0 k
+LOAD i, k
 RETURN

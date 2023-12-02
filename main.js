@@ -117,9 +117,22 @@ function genSim(p) {
     const pmem = document.getElementById("pmem")
     pmem.innerHTML = ''
     simUI.pmem = []
+    var nempty = 0;
     for (let i = 0; i < p.bytecode.length; i++) {
+        if (p.bytecode[i] == undefined) {
+            nempty++
+            continue
+        }
+        if (nempty > 0) {
+            const c = document.createElement("div")
+            c.classList.add("cell")
+            c.classList.add("dmemempty")
+            c.innerText = nempty + " empty addresses"
+            pmem.appendChild(c)
+            nempty = 0
+        }
         const c = genCell(
-            p.lineLabels[i] == null ? i : i + " " + p.lineLabels[i], 
+            p.lineLabels[i] == undefined ? i : i + " " + p.lineLabels[i], 
             "p" + i, 
             prog.bytecode2str(p.bytecode[i]))
         pmem.appendChild(c)

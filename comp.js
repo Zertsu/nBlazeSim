@@ -32,8 +32,15 @@ class Comp {
     
     #syorkk(args) {
         var o = 0
-        o |= parseInt(args[0].substring(1)) << 8
-        if (args[1][0] == 's') {
+        if (this.regNames[args[0]] != undefined) {
+            o |= this.regNames[args[0]] << 8
+        } else {
+            o |= parseInt(args[0].substring(1)) << 8
+        }
+
+        if (this.regNames[args[1]] != undefined) {
+            o |= this.regNames[args[1]] << 4
+        } else if(args[1][0] == 's') {
             o |= parseInt(args[1].substring(1)) << 4
         } else {
             o |= this.#parseConst(args[1]) | 1 << 12
@@ -50,7 +57,12 @@ class Comp {
     
     #handleSR(ext, str) {
         var o = 0b010100 << 12
-        o |= parseInt(str.trim().substring(1)) << 8
+        const reg = str.trim()
+        if (this.regNames[reg]) {
+            o |= this.regNames[reg] << 8
+        } else {
+            o |= parseInt(reg.substring(1)) << 8
+        }
         o |= ext
         return [o, null]
     }
@@ -143,12 +155,23 @@ class Comp {
         "ENINTERR"   : str => this.#handleJmp("eni", str),
         "DISINTERRR" : str => this.#handleJmp("disi", str)
     }
+
+    #dirs = {
+        "NAMEREG" : str => {
+            const args = this.#tokenize(str)
+            this.regNames[args[1]] = parseInt(args[0].substring(1))
+        },
+        "ADDRESS" : str => {
+            this.bytecodeIndex = this.#parseConst(str.trim())
+        }
+    }
     
     #translateCode() {
         let lines = this.src
             .replace("(", "")
             .replace(")", "")
             .replace(/(\/\/.*)\n/g, "")
+            .replace(/( *; *)/g, ";")
             .replace(/([ \t]*\n[ \t]*)/gm, "\n")
             .split('\n')
         
@@ -156,8 +179,10 @@ class Comp {
         this.labels = {}
         this.jumpTarg = []
         this.addr2src = []
-    
+        this.regNames = {}
+
         let lableQ = []
+        this.bytecodeIndex = 0;
         for (let i = 0; i < lines.length; i++) {
             const fullline = lines[i].split(";")
             for (let j = 0; j < fullline.length; j++) {
@@ -175,14 +200,18 @@ class Comp {
                     continue
                 }
                 comm = comm.split(" ")
+                if (this.#dirs[comm[0]] != undefined) {
+                    this.#dirs[comm[0]](comm.slice(1).join(' '))
+                    continue
+                }
                 let inst, jtar
                 [inst, jtar] = this.#opCodes[comm[0]](comm.slice(1).join(' '))
-                this.jumpTarg[this.bytecode.length] = jtar
+                this.jumpTarg[this.bytecodeIndex] = jtar
                 while (lableQ.length) {
-                    this.labels[lableQ.pop()] = this.bytecode.length
+                    this.labels[lableQ.pop()] = this.bytecodeIndex
                 }
-                this.addr2src[this.bytecode.length] = i
-                this.bytecode.push(inst)
+                this.addr2src[this.bytecodeIndex] = i
+                this.bytecode[this.bytecodeIndex++] = inst
             }
         }
         for (let i = 0; i < this.bytecode.length; i++) {
@@ -195,11 +224,15 @@ class Comp {
         for (const key in this.labels) {
             this.lineLabels[this.labels[key]] = key
         }
+        this.bytecodeIndex = undefined
     }
 
     static bytecode2bin(code) {
+        if (code == undefined) {
+            code = 0b111111 << 12
+        }
         let n = code.toString(2);
-        n = "000000000000000000".substr(n.length) + n;
+        n = "000000000000000000".substring(n.length) + n;
         return n
     }
 

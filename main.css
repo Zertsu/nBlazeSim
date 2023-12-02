@@ -26,3 +26,8 @@
 #pmem .cell *:first-child {
     width: 100px;
 }
+
+.cell.dmemempty {
+    background-color: beige;
+    text-align: center;
+}

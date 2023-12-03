@@ -27,9 +27,10 @@ document.getElementById("step10Btn").addEventListener("click", e =>{
         updateSimUI(sim)
         if (++count == 10) {
             clearInterval(simUI.interID)
+            simUI.interID = undefined
             autoRunHan(false)
         }
-    }, 50);
+    }, 1000 / simUI.perEl.value);
 })
 document.getElementById("runBtn").addEventListener("click", e => {
     autoRunHan(true)
@@ -38,13 +39,15 @@ document.getElementById("runBtn").addEventListener("click", e => {
         updateSimUI(sim)
         if (simUI.lastPC == sim.PC) {
             clearInterval(simUI.interID)
+            simUI.interID = undefined
             autoRunHan(false)
         }
         simUI.lastPC = sim.PC
-    }, 50);
+    }, 1000 / simUI.perEl.value);
 })
 document.getElementById("stopBtn").addEventListener("click", e => {
     clearInterval(simUI.interID)
+    simUI.interID = undefined
     autoRunHan(false)
 })
 document.getElementById("intBtn").addEventListener("click", e => {
@@ -56,10 +59,23 @@ document.getElementById("intBtn").addEventListener("click", e => {
 document.getElementById("resetBtn").addEventListener("click", e => {
     if (simUI.interID) {
         clearInterval(simUI.interID)
+        simUI.interID = undefined
     }
     sim.reset()
     autoRunHan(false)
     updateSimUI(sim)
+})
+document.getElementById("freqIn").addEventListener("change", e => {
+    const el = e.target
+    if (!el.validity.valid) {
+        if (el.validity.rangeOverflow) {
+            el.value = el.max
+        } else if (el.validity.rangeUnderflow) {
+            el.value = el.min
+        } else {
+            el.value = 20
+        }
+    }
 })
 
 function autoRunHan(s) {
@@ -68,6 +84,7 @@ function autoRunHan(s) {
     b.step10Btn.disabled = s
     b.runBtn.disabled = s
     b.stopBtn.disabled = !s
+    simUI.perEl.disabled = s
 }
 
 
@@ -106,6 +123,11 @@ function updateSimUI(s) {
     disableClass(pmem, "active")
     simUI.pmem[sim.PC].parentElement.classList.add("active")
 
+    if (simUI.breakP[sim.PC].checked && simUI.interID != undefined) {
+        clearInterval(simUI.interID)
+        simUI.interID = undefined
+        autoRunHan(false)
+    }
 }
 
 function disableClass(parent, tag) {
@@ -150,6 +172,7 @@ function genSim(p) {
     const pmem = document.getElementById("pmem")
     pmem.innerHTML = ''
     simUI.pmem = []
+    simUI.breakP = []
     var nempty = 0;
     for (let i = 0; i < p.bytecode.length; i++) {
         if (p.bytecode[i] == undefined) {
@@ -167,24 +190,34 @@ function genSim(p) {
         const c = genCell(
             p.lineLabels[i] == undefined ? i : i + " " + p.lineLabels[i], 
             "p" + i, 
-            prog.bytecode2str(p.bytecode[i]))
+            prog.bytecode2str(p.bytecode[i]), true)
         pmem.appendChild(c)
         simUI.pmem[i] = c.lastChild
+        simUI.breakP[i] = c.firstChild
     }
     simUI.btn = {}
     for (const b of ["stepBtn", "step10Btn", "runBtn", "stopBtn", "intBtn"]) {
         simUI.btn[b] = document.getElementById(b)
     }
+    simUI.perEl = document.getElementById("freqIn")
     document.getElementById("sim").style = ""
 }
 
-function genCell(name, id, value) {
+function genCell(name, id, value, checkbox) {
     const o = document.createElement("div")
     o.id = id
     o.className = "cell"
+
+    if (checkbox) {
+        const cbox = document.createElement("input")
+        cbox.type = "checkbox"
+        o.appendChild(cbox)
+    }
+
     const lab = document.createElement("div")
     lab.innerText = name
     o.appendChild(lab)
+    
     const val = document.createElement("div")
     val.id = id + 'v'
     val.innerText = value

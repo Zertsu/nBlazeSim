@@ -13,6 +13,10 @@
     background-color: lightgray;
 }
 
+.tOuter > *:first-child {
+    text-align: center;
+}
+
 .tCont {
     display: grid;
     grid-template-rows: repeat(32, 1fr);
@@ -20,11 +24,28 @@
 }
 
 .active {
-    background-color: red;
+    background-color: lightcoral;
 }
 
-#pmem .cell *:first-child {
+#pmem .cell *:nth-child(2) {
     width: 100px;
+}
+
+#pmem .cell input[type='checkbox'] {
+    cursor: pointer;
+    appearance: none;
+    height: 0.7em;
+    width: 0.7em;
+    border-radius: 50%;
+    margin: auto 1ch auto 1ch;
+}
+
+#pmem .cell input[type='checkbox']:hover {
+    background-color: darkgray;
+}
+
+#pmem .cell input[type='checkbox']:checked {
+    background-color: red;
 }
 
 .cell.dmemempty {

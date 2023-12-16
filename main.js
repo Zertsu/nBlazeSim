@@ -11,6 +11,11 @@ document.getElementById("compBtn").addEventListener("click" ,e => {
     sim.pmem = prog.bytecode
     genSim(prog)
     updateSimUI(sim)
+    document.getElementById("exportBtn").disabled = false
+})
+document.getElementById("exportBtn").addEventListener("click", async e => {
+    let vhd = await vhdGen.genVHD(prog)
+    vhdGen.downlaodFile("prog_memory.vhd", vhd)
 })
 
 

@@ -1,8 +1,8 @@
-.cell {
+.tCont > div {
     border: 1px solid darkgray;
 }
 
-.cell > * {
+.tCont > div > * {
     display: inline-block;
     margin-left: 1ch;
     margin-right: 1ch;
@@ -27,11 +27,11 @@
     background-color: lightcoral;
 }
 
-#pmem .cell *:nth-child(2) {
+.pmem > div > *:nth-child(2) {
     width: 100px;
 }
 
-#pmem .cell input[type='checkbox'] {
+.pmem input[type='checkbox'] {
     cursor: pointer;
     appearance: none;
     height: 0.7em;
@@ -40,15 +40,19 @@
     margin: auto 1ch auto 1ch;
 }
 
-#pmem .cell input[type='checkbox']:hover {
+.pmem input[type='checkbox']:hover {
     background-color: darkgray;
 }
 
-#pmem .cell input[type='checkbox']:checked {
+.pmem input[type='checkbox']:checked {
     background-color: red;
 }
 
-.cell.dmemempty {
+.pmem > .dmemempty {
     background-color: beige;
     text-align: center;
+}
+
+.stack > div {
+    visibility: hidden;
 }

@@ -56,3 +56,31 @@
 .stack > div {
     visibility: hidden;
 }
+
+
+.modOuter {
+    background-color: beige;
+    width: 200px;
+}
+
+.modOuter > div:first-child
+{
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 25px 25px;
+}
+
+.modOuter .modSel {
+    grid-column: span 3;
+    display: grid;
+    grid-template-columns: 1fr;
+}
+
+.modOuter .modSel > div {
+    display: grid;
+    grid-template-columns: 4fr 1fr 1fr;
+}
+
+.modOuter input[type='text'] {
+    min-width: 0;
+}

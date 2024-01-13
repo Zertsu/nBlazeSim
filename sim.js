@@ -2,16 +2,15 @@
 
 class Sim {
 
-    constructor() {
-        this.pmem = []
+    constructor(pmem, portCallback) {
+        this.pmem = pmem
+        this.port = portCallback
         this.dmem = new Uint16Array(64)
         this.stack = []
         this.reg = new Uint16Array(16)
         this.PC = 0
         this.ZF = false
         this.CF = false
-        this.pin = []
-        this.pout = []
         this.intEn = true
         this.intrq = false
     }
@@ -55,12 +54,6 @@ class Sim {
         const addr = inst & 0b111111111111
         const intEn = inst & 1
         
-        const ppush = (pID, data) => {
-            if (s.pout[pID] == undefined) {
-                s.pout[pID] = []
-            }
-            s.pout[pID].push(data)
-        }
         const updFlags = (t, trueVal) => {
             if (t.includes("z")) {
                 s.ZF = s.reg[sX] == 0
@@ -119,12 +112,12 @@ class Sim {
             // Data moving inst
             case 0b000001: s.reg[sX] = kk                       ; break // LOAD sX, kk
             case 0b000000: s.reg[sX] = s.reg[sY]                ; break // LOAD sX, sY
-            case 0b001001: s.reg[sX] = s.pin[kk].shift()        ; break // INPUT sX, PP
-            case 0b001000: s.reg[sX] = s.pin[s.reg[sY]].shift() ; break // INPUT sX, (sY)
+            case 0b001001: s.reg[sX] = s.port("r", kk)          ; break // INPUT sX, PP
+            case 0b001000: s.reg[sX] = s.port("r", s.reg[sY])   ; break // INPUT sX, (sY)
             case 0b001011: s.reg[sX] = s.dmem[sa]               ; break // FETCH sX, sa
             case 0b001010: s.reg[sX] = s.dmem[s.reg[sY]]        ; break // FETCH sX, (sY)
-            case 0b101101: ppush(kk, s.reg[sX])                 ; break // OUTPUT sX, PP
-            case 0b101100: ppush(s.reg[sY], s.reg[sX])          ; break // OUTPUT sX, (sY)
+            case 0b101101: s.port("w", kk, s.reg[sX])           ; break // OUTPUT sX, PP
+            case 0b101100: s.port("w", s.reg[sY], s.reg[sX])    ; break // OUTPUT sX, (sY)
             case 0b101111: s.dmem[sa] = s.reg[sX]               ; break // STORE sX, sa
             case 0b101110: s.dmem[s.reg[sY]] = s.reg[sX]        ; break // STORE sX, (sY)
     

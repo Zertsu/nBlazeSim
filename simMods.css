@@ -1,0 +1,33 @@
+/* LedMod */
+.ledCont {
+    --led-size: 15px;
+    padding: 10px;
+    display: flex;
+    justify-content: space-around;
+    align-items: auto;
+}
+
+.ledCont .led {
+    display: inline-block;
+    background-color: darkred;
+    width: var(--led-size);
+    height: var(--led-size);
+    border-radius: 50%;
+}
+
+.ledCont .led.active {
+    background-color: red;
+}
+
+
+/* SwitchMod */
+.swCont {
+    padding: 10px;
+    display: flex;
+    justify-content: space-around;
+    align-items: auto;
+}
+
+.swCont .input[type='checkbox'] {
+    cursor: pointer;
+}

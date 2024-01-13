@@ -1,14 +1,19 @@
 "use strict";
 
 class SimUI {
-    constructor(prog, sim, parentElement) {
+    mods = [LedMod, SwitchMod]
+
+
+    constructor(parentElement, prog) {
         this.prog = prog
-        this.sim = sim
+        this.sim = new Sim(prog.bytecode, this.#hanPortReq.bind(this))
         this.parentElement = parentElement
 
         this.running = false
         this.runPeriod = 100
         this.lastExec = undefined
+        this.actMods = new Set()
+        this.ports = {r: {}, w: {}}
         
         this.#genUI()
         this.#updateUI()
@@ -54,11 +59,7 @@ class SimUI {
                 }
             }
             requestAnimationFrame(af)
-        } else {
-            this.#updateButtons()
         }
-
-
         this.#updateButtons()
     }
 
@@ -79,43 +80,85 @@ class SimUI {
         b.run.value = this.running ? "Stop" : "Run"
     }
 
-    #genUI() {
-        this.el = {btn: {}, dmem: [], pmem: [], reg: [], stack: [], breakP: []}
+    #hanPortReq(rw, portID, data) {
+        const l = this.ports[rw]
+        if (l.hasOwnProperty(portID)) {
+            return l[portID](rw, data, portID)
+        } else {
+            return 0
+        }
+    }
+
+    #callbacks = {
+        delete: (e) => {
+            this.actMods.delete(e)
+        },
+        addrUpd: (e) => {
+            this.ports = {r: {}, w: {}}
+            for (const m of this.actMods) {
+                const cb = m.callback.bind(m)
+                for (const t of m.addresses.split(',')) {
+                    if (t[0] == "w" || t[0] == "r") {
+                        this.ports[t[0]][parseInt(t.substring(1))] = cb
+                    } else {
+                        const id = parseInt(t)
+                        this.ports.r[id] = this.ports.w[id] = cb
+                    }
+                }
+            }
+        } 
+    }
+
+    addModule(mod, opts) {
+        const m = new mod(opts, this.#callbacks)
+        this.actMods.add(m)
+        this.#callbacks.addrUpd(m)
+        this.el.modsCont.appendChild(m.contEl)
+    }
 
 
-        const g = (t, opts, children) => {
-            const el = document.createElement(t)
-            if (children !== undefined) {
+    static htmlGen(t, opts, children) {
+        const el = document.createElement(t)
+        if (children !== undefined) {
+            if (Array.isArray(children)) {
                 for (let i = 0; i < children.length; i++) {
                     el.appendChild(children[i])
                 }
+            } else {
+                el.appendChild(children)
             }
-            if (opts !== undefined) {
-                if (opts.klass !== undefined) {
-                    if (Array.isArray(opts.klass)) {
-                        el.classList.add(...opts.klass)
-                    } else {
-                        el.classList.add(opts.klass)
-                    }
-                }
-                if (opts.type !== undefined) {el.type = opts.type}
-                if (opts.value !== undefined) {el.value = opts.value}
-                if (opts.innerText !== undefined) {el.innerText = opts.innerText}
-                if (opts.event !== undefined) {
-                    if (opts.event instanceof Function) {
-                        el.addEventListener("click", opts.event.bind(this))
-                    } else {
-                        for (const [key, value] of Object.entries(opts.event)) {
-                            el.addEventListener(key, value.bind(this))
-                        }
-                    }
-                }
-                if (opts.after instanceof Function) {
-                    opts.after(el)
-                }
-            }
-            return el
         }
+        if (opts !== undefined) {
+            if (opts.klass !== undefined) {
+                if (Array.isArray(opts.klass)) {
+                    el.classList.add(...opts.klass)
+                } else {
+                    el.classList.add(opts.klass)
+                }
+            }
+            if (opts.type !== undefined) {el.type = opts.type}
+            if (opts.value !== undefined) {el.value = opts.value}
+            if (opts.innerText !== undefined) {el.innerText = opts.innerText}
+            if (opts.event !== undefined) {
+                if (opts.event instanceof Function) {
+                    el.addEventListener("click", opts.event.bind(this))
+                } else {
+                    for (const [key, value] of Object.entries(opts.event)) {
+                        el.addEventListener(key, value.bind(this))
+                    }
+                }
+            }
+            if (opts.after instanceof Function) {
+                opts.after(el)
+            }
+        }
+        return el
+    }
+
+    #genUI() {
+        this.el = {btn: {}, dmem: [], pmem: [], reg: [], stack: [], breakP: []}
+
+        const g = SimUI.htmlGen.bind(this)
 
         const genPmem = () => {
             const p = this.prog
@@ -168,8 +211,47 @@ class SimUI {
             return arr
         }
 
+        const genModOpt = () => {
+            let arr = []
+            for (let i = 0; i < this.mods.length; i++) {
+                const mod = this.mods[i];
+                arr.push(g("option", {value: i, innerText: mod.name}))
+            }
+            return arr  
+        }
+
+        const genSelModOpts = () => {
+            const cl = this.mods[this.el.modSel.selectedIndex]
+            let arr = []
+            let inputs = {}
+            for (let i = 0; i < cl.opts.length; i++) {
+                const op = cl.opts[i];
+                arr.push(g("div", {}, [
+                    g("span", {innerText: op.desc}),
+                    g("input", {type: op.type, value: op.val, after: (e) => inputs[op.op] = e})
+                ]))
+            }
+            arr.push(g("div", {}, [
+                g("input", {type: "button", value: "Add", event: (e) => {
+                    let opts = {}
+                    for (const [key, value] of Object.entries(inputs)) {
+                        let v = value.value
+                        if (value.type == "number") {
+                            v = parseInt(v)
+                        }
+                        opts[key] = v
+                    }
+                    this.addModule(cl, opts)
+                }})
+            ]))
+            this.el.modSelOut.innerHTML = ""
+            for (let i = 0; i < arr.length; i++) {
+                this.el.modSelOut.appendChild(arr[i])
+            }
+        }
 
         const cont = g("div", {}, [
+            g("input", {type: "button", value: "Delete",    event: (e) => {e.target.parentElement.remove()}}),
             g("input", {type: "button", value: "Reset"    , klass: "rstBtn" , event: this.reset  , after: (e) => this.el.btn.rst = e  }),
             g("input", {type: "button", value: "Interrupt", klass: "intBtn" , event: this.trigInt, after: (e) => this.el.btn.inter = e}),
             g("input", {type: "button", value: "Step"     , klass: "stepBtn", event: this.step   , after: (e) => this.el.btn.step = e }),
@@ -202,8 +284,18 @@ class SimUI {
                 g("div", {klass: ["spec", "tCont"]}, genSpec())
             ]),
 
+            g("div", {klass: "simModOuter"}, [
+                g("div", {klass: "modSelector"}, [
+                    g("select", {after: (e) => this.el.modSel = e, event: {change: genSelModOpts}}, 
+                        genModOpt()
+                    ),
+                    g("div", {klass: "modOpt", after: (e) => this.el.modSelOut = e})
+                ]),
+                g("div", {klass: "modsCont", after: (e) => this.el.modsCont = e})
+            ])
         ])
 
+        genSelModOpts()
         this.parentElement.appendChild(cont)
     }
 
@@ -236,5 +328,73 @@ class SimUI {
             e.classList.remove("active")
         }
         el.pmem[s.PC].classList.add("active")
+    }
+}
+
+class SimMod {
+    constructor(name, rw, defAddr, callbacks) {
+        this.rw = rw
+        this.defAddr = defAddr
+        this.callbacks = callbacks
+        if (!this.callbacks) {
+            this.callbacks = {delete : () => {}, addrUpd: () => {}}
+        }
+        this.#genContainer(name)
+    }
+
+    addAdrressField() {
+        const g = SimUI.htmlGen.bind(this)
+        const addr = this.el.addrList.childElementCount == 0 ? this.defAddr : ""
+        const ind  = {rw: 0, r: 1, w: 2}[this.rw]
+        this.el.addrList.appendChild(g("div", {}, [
+            g("input", {type: "text", value: addr, event: {change: e => this.#updateAddresses()}}),
+            g("select", {after: (e) => {e.selectedIndex = ind; e.disabled = ind !== 0}, 
+                        event: {change: e => this.#updateAddresses()}}, [
+                g("option", {value: "R/W", innerText: "R/W"}),
+                g("option", {value: "R"  , innerText: "R"  }),
+                g("option", {value: "W"  , innerText: "W"  })
+            ]),
+            g("input", {type: "button", value: "X", event: 
+                (e) => {e.target.parentElement.remove(); this.#updateAddresses()}}
+            )
+        ]))
+        this.#updateAddresses()
+    }
+
+    #updateAddresses() {
+        let o = []
+        for (let i = 0; i < this.el.addrList.childElementCount; i++) {
+            const e = this.el.addrList.children[i].children;
+            const txt = e[0].value
+            if (!txt) {
+                continue
+            }
+            const rw = ["", "r", "w"][e[1].selectedIndex]
+            o.push(...txt.split(",").map(e => rw + e))
+        }
+        this.addresses = o.join()
+        this.callbacks.addrUpd(this)
+    }
+
+    #delete() {
+        this.callbacks.addrUpd(this, "")
+        this.callbacks.delete(this)
+        this.contEl.remove()
+    }
+
+    #genContainer(name) {
+        this.el = {}
+
+        const g = SimUI.htmlGen.bind(this)
+        this.contEl = g("div", {klass: "modOuter"}, [
+            g("div", {klass: "modHeader"}, [
+                g("div", {innerText: name}),
+                g("input", {type: "button", value: "+", event: this.addAdrressField}),
+                g("input", {type: "button", value: "X", event: e => this.#delete()}),
+                g("div", {klass: "modSel",after: (e) => this.el.addrList = e})
+            ]),
+            g("div", {klass: "modCont", after: (e) => this.el.modCont = e})
+        ])
+        this.addAdrressField()
     }
 }

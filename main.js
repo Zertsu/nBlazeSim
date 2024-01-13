@@ -6,9 +6,7 @@ let simUI;
 document.getElementById("compBtn").addEventListener("click" ,e => {
     prog = new Comp(document.getElementById("source").value)
     document.getElementById("bytecode").value = bytecodeToStr(prog.bytecode)
-    let sim = new Sim()
-    sim.pmem = prog.bytecode
-    simUI = new SimUI(prog, sim, document.getElementById("sim"))
+    simUI = new SimUI(document.getElementById("sim"), prog)
     document.getElementById("exportBtn").disabled = false
 })
 document.getElementById("exportBtn").addEventListener("click", async e => {

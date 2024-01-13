@@ -334,6 +334,7 @@ class Comp {
             .replace("sX", "s" + sX)
             .replace("sY", "s" + sY)
             .replace("kk", kk)
+            .replace("PP", kk)
             .replace("sa", sa)
             .replace("addr", label ? label : addr)
         return txt

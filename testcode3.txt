@@ -1,0 +1,5 @@
+l:INPUT s0,1
+INPUT s1, 2
+ADD s0, s1
+OUTPUT s0, 1
+JUMP l

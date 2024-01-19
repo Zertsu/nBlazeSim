@@ -8,6 +8,7 @@ class LedMod extends SimMod {
 
     constructor(opts, callbacks) {
         super("LEDs", "w", 5, callbacks)
+        this.state = {leds : 0}
         this.nleds = 4
         if (opts.n) {
             this.nleds = opts.n
@@ -17,15 +18,20 @@ class LedMod extends SimMod {
 
     callback(rw, data, addr) {
         if (rw == "w") {
-            for (let i = this.leds.length - 1; i >= 0 ; i--) {
-                const l = this.leds[i];
-                if(data & 1) {
-                    l.classList.add("active")
-                } else {
-                    l.classList.remove("active")
-                }
-                data >>= 1;
+            this.state.leds = data
+        }
+    }
+
+    updateUI() {
+        let d = this.state.leds
+        for (let i = this.leds.length - 1; i >= 0 ; i--) {
+            const l = this.leds[i];
+            if(d & 1) {
+                l.classList.add("active")
+            } else {
+                l.classList.remove("active")
             }
+            d >>= 1;
         }
     }
 
@@ -49,6 +55,7 @@ class SwitchMod extends SimMod {
 
     constructor(opts, callbacks) {
         super("Switches", "r", 6, callbacks)
+        this.state = {switches: 0}
         this.nsw = 4
         if (opts.n) {
             this.nsw = opts.n
@@ -58,24 +65,26 @@ class SwitchMod extends SimMod {
 
     callback(rw, data, addr) {
         if (rw == "r") {
-            let out = 0
-            for (let i = 0; i < this.sws.length; i++) {
-                const sw = this.sws[i];
-                if (sw.checked) {
-                    out |= 1
-                }
-                out <<= 1
-            }
-            return out >> 1
+            return this.state.switches
         }
+    }
+
+    updateUI() {
+        // do nothing
     }
 
     #genUI() {
         const g = SimUI.htmlGen.bind(this)
         this.sws = []
-        for (let i = 0; i < this.nsw; i++) {
+        for (let i = this.nsw - 1; i >= 0 ; i--) {
             this.sws.push(
-                g("input", {type: "checkbox"}),
+                g("input", {type: "checkbox", event : {change: (e) => {
+                    if (e.target.checked) {
+                        this.state.switches |= 1 << i
+                    } else {
+                        this.state.switches &= ~(1 << i)
+                    }
+                }}}),
             )
         }
         return g("div", {klass: "swCont"}, this.sws)

@@ -328,6 +328,11 @@ class SimUI {
             e.classList.remove("active")
         }
         el.pmem[s.PC].classList.add("active")
+
+
+        for (const m of this.actMods) {
+            m.updateUI()
+        }
     }
 }
 

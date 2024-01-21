@@ -297,25 +297,25 @@ class Comp {
         const label = this.lineLabels[addr]
         switch (txt) {
             case "SR":
-                const c = aluext % 0b111
+                const c = aluext & 0b111
                 if (aluext & 0b1000) {
                     // SRR
                     switch (c) {
-                        case 0b110: txt = "SR0"
-                        case 0b111: txt = "SR1"
-                        case 0b010: txt = "SRX"
-                        case 0b000: txt = "SRA"
-                        case 0b100: txt = "RR"
+                        case 0b110: txt = "SR0" ; break
+                        case 0b111: txt = "SR1" ; break
+                        case 0b010: txt = "SRX" ; break
+                        case 0b000: txt = "SRA" ; break
+                        case 0b100: txt = "RR"  ; break
                         default: break 
                     }
                 } else {
                     // SRL
                     switch (c) {
-                        case 0b110:txt = "SL0"
-                        case 0b111:txt = "SL1"
-                        case 0b100:txt = "SLX"
-                        case 0b000:txt = "SLA"
-                        case 0b010:txt = "RL"
+                        case 0b110:txt = "SL0"; break
+                        case 0b111:txt = "SL1"; break
+                        case 0b100:txt = "SLX"; break
+                        case 0b000:txt = "SLA"; break
+                        case 0b010:txt = "RL" ; break
                         default: break
                     }
                 }

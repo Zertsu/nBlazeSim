@@ -40,6 +40,10 @@ class SimUI {
         this.running = !this.running
         if (this.running) {
             const af = (t) => {
+                if (!this.running) {
+                    this.lastExec = undefined
+                    return
+                }
                 if (this.lastExec === undefined) {
                     this.lastExec = t
                 }
@@ -52,11 +56,7 @@ class SimUI {
                     }
                 }
                 this.#updateUI()
-                if (this.running) {
-                    requestAnimationFrame(af)
-                } else {
-                    this.lastExec = undefined
-                }
+                requestAnimationFrame(af)
             }
             requestAnimationFrame(af)
         }

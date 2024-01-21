@@ -7,7 +7,9 @@ class LedMod extends SimMod {
     ]
 
     constructor(opts, callbacks) {
-        super("LEDs", "w", 5, callbacks)
+        super("LEDs", callbacks, [
+            {addr: "w1", rw: "rw", desc: "Leds"}
+        ])
         this.state = {leds : 0}
         this.nleds = 4
         if (opts.n) {
@@ -16,11 +18,14 @@ class LedMod extends SimMod {
         this.el.modCont.appendChild(this.#genUI())
     }
 
-    callback(rw, data, addr) {
+    callbacks = [(rw, data, addr) => {
+        if (rw == "r") {
+            return this.state.leds
+        }
         if (rw == "w") {
             this.state.leds = data
         }
-    }
+    }]
 
     updateUI() {
         let d = this.state.leds
@@ -54,7 +59,9 @@ class SwitchMod extends SimMod {
     ]
 
     constructor(opts, callbacks) {
-        super("Switches", "r", 6, callbacks)
+        super("Switches", callbacks, [
+            {addr: "2", rw: "r", desc: "Switches"}
+        ])
         this.state = {switches: 0}
         this.nsw = 4
         if (opts.n) {
@@ -63,12 +70,12 @@ class SwitchMod extends SimMod {
         this.el.modCont.appendChild(this.#genUI())
     }
 
-    callback(rw, data, addr) {
+    callbacks = [(rw, data, addr) => {
         if (rw == "r") {
             return this.state.switches
         }
-    }
-
+    }]
+    
     updateUI() {
         // do nothing
     }

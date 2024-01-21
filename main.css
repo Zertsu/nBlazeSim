@@ -67,7 +67,7 @@
 {
     width: 100%;
     display: grid;
-    grid-template-columns: 1fr 25px 25px;
+    grid-template-columns: 1fr 25px;
 }
 
 .modOuter .modSel {

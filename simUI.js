@@ -92,17 +92,23 @@ class SimUI {
     #callbacks = {
         delete: (e) => {
             this.actMods.delete(e)
+            this.#callbacks.addrUpd()
         },
         addrUpd: (e) => {
             this.ports = {r: {}, w: {}}
             for (const m of this.actMods) {
-                const cb = m.callback.bind(m)
-                for (const t of m.addresses.split(',')) {
-                    if (t[0] == "w" || t[0] == "r") {
-                        this.ports[t[0]][parseInt(t.substring(1))] = cb
-                    } else {
-                        const id = parseInt(t)
-                        this.ports.r[id] = this.ports.w[id] = cb
+                for (let i = 0; i < m.callbacks.length; i++) {
+                    const cb = m.callbacks[i].bind(m);
+                    const info = m.addr[i]
+                    for (const t of info.addr.split(',')) {
+                        if (info.rw == "w" || info.rw == "r") {
+                            this.ports[info.rw][parseInt(t)] = cb
+                        } else if (t[0] == "w" || t[0] == "r") {
+                            this.ports[t[0]][parseInt(t.substring(1))] = cb
+                        } else {
+                            const id = parseInt(t)
+                            this.ports.r[id] = this.ports.w[id] = cb
+                        }
                     }
                 }
             }
@@ -112,7 +118,7 @@ class SimUI {
     addModule(mod, opts) {
         const m = new mod(opts, this.#callbacks)
         this.actMods.add(m)
-        this.#callbacks.addrUpd(m)
+        this.#callbacks.addrUpd()
         this.el.modsCont.appendChild(m.contEl)
     }
 
@@ -337,69 +343,48 @@ class SimUI {
 }
 
 class SimMod {
-    constructor(name, rw, defAddr, callbacks) {
-        this.rw = rw
-        this.defAddr = defAddr
-        this.callbacks = callbacks
-        if (!this.callbacks) {
-            this.callbacks = {delete : () => {}, addrUpd: () => {}}
-        }
-        this.#genContainer(name)
-    }
-
-    addAdrressField() {
-        const g = SimUI.htmlGen.bind(this)
-        const addr = this.el.addrList.childElementCount == 0 ? this.defAddr : ""
-        const ind  = {rw: 0, r: 1, w: 2}[this.rw]
-        this.el.addrList.appendChild(g("div", {}, [
-            g("input", {type: "text", value: addr, event: {change: e => this.#updateAddresses()}}),
-            g("select", {after: (e) => {e.selectedIndex = ind; e.disabled = ind !== 0}, 
-                        event: {change: e => this.#updateAddresses()}}, [
-                g("option", {value: "R/W", innerText: "R/W"}),
-                g("option", {value: "R"  , innerText: "R"  }),
-                g("option", {value: "W"  , innerText: "W"  })
-            ]),
-            g("input", {type: "button", value: "X", event: 
-                (e) => {e.target.parentElement.remove(); this.#updateAddresses()}}
-            )
-        ]))
-        this.#updateAddresses()
-    }
-
-    #updateAddresses() {
-        let o = []
-        for (let i = 0; i < this.el.addrList.childElementCount; i++) {
-            const e = this.el.addrList.children[i].children;
-            const txt = e[0].value
-            if (!txt) {
-                continue
-            }
-            const rw = ["", "r", "w"][e[1].selectedIndex]
-            o.push(...txt.split(",").map(e => rw + e))
-        }
-        this.addresses = o.join()
-        this.callbacks.addrUpd(this)
+    constructor(name, updateHand, addrList) {
+        this.updateHand = updateHand
+        this.addr = addrList
+        this.#genContainer(name, addrList)
     }
 
     #delete() {
-        this.callbacks.addrUpd(this, "")
-        this.callbacks.delete(this)
+        for (let i = 0; i < this.addr.length; i++) {
+            this.addr[i].addr = ""
+        }
+        this.updateHand.delete(this)
         this.contEl.remove()
     }
 
-    #genContainer(name) {
+    #genContainer(name, addrList) {
         this.el = {}
 
         const g = SimUI.htmlGen.bind(this)
+
+        const genAddrList = () => {
+            let o = []
+            for (let i = 0; i < addrList.length; i++) {
+                const add = addrList[i];
+                o.push(g("div", {}, [
+                    g("input", {type: "text", value: add.addr, event: {change: e => {
+                        this.addr[i].addr = e.target.value
+                        this.updateHand.addrUpd(this)
+                    }}}),
+                    g("span", {innerText: add.rw}),
+                    g("span", {innerText: add.desc})
+                ]))
+            }
+            return o
+        }
+
         this.contEl = g("div", {klass: "modOuter"}, [
             g("div", {klass: "modHeader"}, [
                 g("div", {innerText: name}),
-                g("input", {type: "button", value: "+", event: this.addAdrressField}),
                 g("input", {type: "button", value: "X", event: e => this.#delete()}),
-                g("div", {klass: "modSel",after: (e) => this.el.addrList = e})
+                g("div", {klass: "modSel",after: (e) => this.el.addrList = e}, genAddrList())
             ]),
             g("div", {klass: "modCont", after: (e) => this.el.modCont = e})
         ])
-        this.addAdrressField()
     }
 }

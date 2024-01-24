@@ -14,6 +14,7 @@ class SimUI {
         this.runPeriod = 100
         this.lastExec = undefined
         this.actMods = new Set()
+        this.breakPoints = new Set()
         this.ports = {r: {}, w: {}}
         
         this.#genUI()
@@ -25,6 +26,7 @@ class SimUI {
         this.prog = new Comp(this.srcElement.value)
         this.sim.pmem = this.prog.bytecode
         this.sim.reset()
+        this.breakPoints.clear()
         this.#genUI()
         this.#updateUI()
     }
@@ -60,7 +62,7 @@ class SimUI {
                 while (this.lastExec + this.runPeriod < t) {
                     this.sim.runCycle()
                     this.lastExec += this.runPeriod
-                    if (this.el.breakP[this.sim.PC].checked) {
+                    if (this.breakPoints.has(this.sim.PC)) {
                         this.run(false)
                         break
                     }
@@ -172,7 +174,7 @@ class SimUI {
     }
 
     #genUI() {
-        const el = {btn: {}, dmem: [], pmem: [], reg: [], stack: [], breakP: []}
+        const el = {btn: {}, dmem: [], pmem: [], reg: [], stack: []}
 
         const g = SimUI.htmlGen.bind(this)
 
@@ -191,7 +193,13 @@ class SimUI {
                     nempty = 0
                 }
                 arr.push(g("div", {after: (e) => {el.pmem[i] = e}}, [
-                    g("input", {type: "checkbox", after: (e) => {el.breakP[i] = e}}),
+                    g("input", {type: "checkbox", event: {change: e => {
+                        if (e.target.checked) {
+                            this.breakPoints.add(i)
+                        } else {
+                            this.breakPoints.delete(i)
+                        }
+                    }}}),
                     g("div", {innerText: p.lineLabels[i] == undefined ? i : i + " " + p.lineLabels[i]}),
                     g("div", {innerText: p.bytecode2str(p.bytecode[i])})
                 ]))

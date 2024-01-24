@@ -1,0 +1,22 @@
+l:
+ADD s0, 1
+COMP s0, FF
+JUMP NZ, l
+
+LOAD s0, 0
+ADD s1, 1
+COMP s1, FF
+JUMP NZ, l
+
+LOAD s1, 0
+ADD s2, 1
+COMP s2, FF
+JUMP NZ, l
+
+LOAD s2, 0
+ADD s3, 1
+COMP s3, FF
+JUMP NZ, l
+
+end:
+JUMP end

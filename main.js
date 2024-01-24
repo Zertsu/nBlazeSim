@@ -4,9 +4,10 @@ let prog;
 let simUI;
 
 document.getElementById("compBtn").addEventListener("click" ,e => {
-    prog = new Comp(document.getElementById("source").value)
+    const src = document.getElementById("source")
+    prog = new Comp(src.value)
     document.getElementById("bytecode").value = bytecodeToStr(prog.bytecode)
-    simUI = new SimUI(document.getElementById("sim"), prog)
+    simUI = new SimUI(document.getElementById("sim"), prog, src)
     document.getElementById("exportBtn").disabled = false
 })
 document.getElementById("exportBtn").addEventListener("click", async e => {

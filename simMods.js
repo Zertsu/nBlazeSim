@@ -15,6 +15,7 @@ class LedMod extends SimMod {
         if (opts.n) {
             this.nleds = opts.n
         }
+        this.updateReq = false
         this.el.modCont.appendChild(this.#genUI())
     }
 
@@ -24,10 +25,14 @@ class LedMod extends SimMod {
         }
         if (rw == "w") {
             this.state.leds = data
+            this.updateReq = true
         }
     }]
 
     updateUI() {
+        if (!this.updateReq) {
+            return
+        }
         let d = this.state.leds
         for (let i = this.leds.length - 1; i >= 0 ; i--) {
             const l = this.leds[i];
@@ -38,6 +43,7 @@ class LedMod extends SimMod {
             }
             d >>= 1;
         }
+        this.updateReq = false
     }
 
     #genUI() {
@@ -95,5 +101,83 @@ class SwitchMod extends SimMod {
             )
         }
         return g("div", {klass: "swCont"}, this.sws)
+    }
+}
+
+class StackMod extends SimMod {
+    static name = "Stack"
+    static opts = [
+        {op: "size", type: "number", val: 32, desc: "Size"}
+    ]
+
+    constructor(opts, callbacks) {
+        super("Stack", callbacks, [
+            {addr: "3", rw: "rw", desc: "Push/Pop"},
+            {addr: "4", rw: "r", desc: "Length"}
+        ])
+        this.size = opts.size
+        this.state = {stack: []}
+        this.updateReq = false
+        this.el.modCont.appendChild(this.#genUI())
+    }
+
+    callbacks = [
+        (rw, data, addr) => {
+            if (rw == "r") {
+                const e = this.state.stack.pop()
+                this.updateReq = true
+                return e === undefined ? 0 : e
+            }
+            if (rw == "w") {
+                if (this.state.stack.length < this.size) {
+                    this.state.stack.push(data)
+                    this.updateReq = true
+                }
+            }
+        },
+        (rw, data, addr) => {
+            if (rw == "r") {
+                return this.state.stack.length
+            }
+        }
+    ]
+
+    updateUI() {
+        if (!this.updateReq) {
+            return
+        }
+        const stack = this.state.stack
+        const stackEls = this.el.stack
+        
+        this.el.lenEl.innerText = stack.length
+        for (let i = 0; i < stack.length; i++) {
+            stackEls[i].innerText = stack[i]
+            stackEls[i].style.visibility = "visible"
+        }
+        for (let i = stack.length; i < this.size; i++) {
+            stackEls[i].style.visibility = null
+        }
+        this.updateReq = false
+    }
+
+    #genUI() {
+        const g = SimUI.htmlGen.bind(this)
+
+        const genList = () => {
+            const o = []
+            this.el.stack = []
+            for (let i = 0; i < this.size; i++) {
+                o.push(g("div", {innerText: "", after: e => this.el.stack.push(e)}))
+            }
+            return o
+        }
+
+        return g("div", {klass: "stackCon"}, [
+            g("div", {klass: "stackHeader"}, [
+                g("span", {innerText: "Length: "}),
+                g("span", {innerText: "0", after: e => this.el.lenEl = e})
+            ]),
+            g("div", {klass: "stackContent"}, genList())
+        ])
     }
 }

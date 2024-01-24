@@ -1,7 +1,7 @@
 "use strict";
 
 class SimUI {
-    mods = [LedMod, SwitchMod]
+    mods = [LedMod, SwitchMod, StackMod]
 
 
     constructor(parentElement, prog, srcElement) {

@@ -1,0 +1,14 @@
+l:
+OUTPUT s0, 3
+ADD s0, 1
+COMP s0, 10
+JUMP NZ, l
+
+l2:
+INPUT s5, 4
+COMP s5, 0
+JUMP Z, end
+INPUT s1, 3
+JUMP l2
+
+end: JUMP end

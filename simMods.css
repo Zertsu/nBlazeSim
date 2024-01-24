@@ -31,3 +31,10 @@
 .swCont .input[type='checkbox'] {
     cursor: pointer;
 }
+
+
+/* Stack */
+
+.stackContent > div {
+    visibility: hidden;
+}

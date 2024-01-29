@@ -35,13 +35,13 @@ class Comp {
         if (this.regNames[args[0]] != undefined) {
             o |= this.regNames[args[0]] << 8
         } else {
-            o |= parseInt(args[0].substring(1)) << 8
+            o |= parseInt(args[0].substring(1), 16) << 8
         }
 
         if (this.regNames[args[1]] != undefined) {
             o |= this.regNames[args[1]] << 4
         } else if(args[1][0] == 's') {
-            o |= parseInt(args[1].substring(1)) << 4
+            o |= parseInt(args[1].substring(1), 16) << 4
         } else {
             o |= this.#parseConst(args[1]) | 1 << 12
         }

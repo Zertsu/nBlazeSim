@@ -168,11 +168,11 @@ class Comp {
     
     #translateCode() {
         let lines = this.src
-            .replace("(", "")
-            .replace(")", "")
-            .replace(/(\/\/.*)\n/g, "")
-            .replace(/( *; *)/g, ";")
-            .replace(/([ \t]*\n[ \t]*)/gm, "\n")
+            .replaceAll("(", "")
+            .replaceAll(")", "")
+            .replaceAll(/(\/\/.*)\n/g, "")
+            .replaceAll(/( *; *)/g, ";")
+            .replaceAll(/([ \t]*\n[ \t]*)/gm, "\n")
             .split('\n')
         
         this.bytecode = []
@@ -200,12 +200,12 @@ class Comp {
                     continue
                 }
                 comm = comm.split(" ")
-                if (this.#dirs[comm[0]] != undefined) {
-                    this.#dirs[comm[0]](comm.slice(1).join(' '))
+                if (this.#dirs[comm[0].toUpperCase()] != undefined) {
+                    this.#dirs[comm[0].toUpperCase()](comm.slice(1).join(' '))
                     continue
                 }
                 let inst, jtar
-                [inst, jtar] = this.#opCodes[comm[0]](comm.slice(1).join(' '))
+                [inst, jtar] = this.#opCodes[comm[0].toUpperCase()](comm.slice(1).join(' '))
                 this.jumpTarg[this.bytecodeIndex] = jtar
                 while (lableQ.length) {
                     this.labels[lableQ.pop()] = this.bytecodeIndex
@@ -229,7 +229,7 @@ class Comp {
 
     static bytecode2bin(code) {
         if (code == undefined) {
-            code = 0b111111 << 12
+            code = 0
         }
         let n = code.toString(2);
         n = "000000000000000000".substring(n.length) + n;

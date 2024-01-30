@@ -114,7 +114,9 @@ class StackMod extends SimMod {
         super("Stack", callbacks, [
             {addr: "3", rw: "rw", desc: "Push/Pop"},
             {addr: "4", rw: "r", desc: "Length"}
-        ])
+        ], 
+            {x: 1, y: Math.ceil(opts.size / 2 * 18 / 100) + 1}
+        )
         this.size = opts.size
         this.state = {stack: []}
         this.updateReq = false
@@ -167,7 +169,7 @@ class StackMod extends SimMod {
             const o = []
             this.el.stack = []
             for (let i = 0; i < this.size; i++) {
-                o.push(g("div", {innerText: "", after: e => this.el.stack.push(e)}))
+                o.push(g("div", {innerText: "0", after: e => this.el.stack.push(e)}))
             }
             return o
         }
@@ -177,7 +179,7 @@ class StackMod extends SimMod {
                 g("span", {innerText: "Length: "}),
                 g("span", {innerText: "0", after: e => this.el.lenEl = e})
             ]),
-            g("div", {klass: "stackContent"}, genList())
+            g("div", {klass: "stackContent", style: `--stackH: ${this.size / 2}`}, genList())
         ])
     }
 }

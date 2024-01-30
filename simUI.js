@@ -86,6 +86,11 @@ class SimUI {
         this.runPeriod = period
     }
 
+    delete() {
+        this.running = false
+        this.el.mainEl.remove()
+    }
+
     #updateButtons() {
         const b = this.el.btn
         b.step.disabled = this.running
@@ -157,6 +162,7 @@ class SimUI {
             if (opts.type !== undefined) {el.type = opts.type}
             if (opts.value !== undefined) {el.value = opts.value}
             if (opts.innerText !== undefined) {el.innerText = opts.innerText}
+            if (opts.style !== undefined) {el.style = opts.style}
             if (opts.event !== undefined) {
                 if (opts.event instanceof Function) {
                     el.addEventListener("click", opts.event.bind(this))
@@ -274,16 +280,16 @@ class SimUI {
             }
         }
 
-        const cont = g("div", {}, [
-            g("input", {type: "button", value: "Delete",    event: (e) => {e.target.parentElement.remove()}}),
-            g("input", {type: "button", value: "Recompile", event: (e) => {this.recompile()}}),
-            g("input", {type: "button", value: "Reset"    , klass: "rstBtn" , event: this.reset  , after: (e) => el.btn.rst = e  }),
-            g("input", {type: "button", value: "Interrupt", klass: "intBtn" , event: this.trigInt, after: (e) => el.btn.inter = e}),
-            g("input", {type: "button", value: "Step"     , klass: "stepBtn", event: this.step   , after: (e) => el.btn.step = e }),
-            g("input", {type: "button", value: "Run"      , klass: "runBtn" , event: this.run    , after: (e) => el.btn.run = e  }),
-            g("input", {type: "number", value: this.runPeriod, klass: "freqIn", event: {change: e => this.setRunFreq(parseFloat(e.target.value))}}),
-
-            g("br"),
+        const cont = g("div", {klass: "simCont"}, [
+            g("div", {klass: "controls"}, [
+                g("input", {type: "button", value: "Delete",    event: this.delete}),
+                g("input", {type: "button", value: "Recompile", event: this.recompile}),
+                g("input", {type: "button", value: "Reset"    , klass: "rstBtn" , event: this.reset  , after: (e) => el.btn.rst = e  }),
+                g("input", {type: "button", value: "Interrupt", klass: "intBtn" , event: this.trigInt, after: (e) => el.btn.inter = e}),
+                g("input", {type: "button", value: "Step"     , klass: "stepBtn", event: this.step   , after: (e) => el.btn.step = e }),
+                g("input", {type: "button", value: "Run"      , klass: "runBtn" , event: this.run    , after: (e) => el.btn.run = e  }),
+                g("input", {type: "number", value: this.runPeriod, klass: "freqIn", event: {change: e => this.setRunFreq(parseFloat(e.target.value))}}),
+            ]),
 
             g("div", {klass: ["pmemOuter", "tOuter"]}, [
                 g("div", {innerText: "Program Memory"}),
@@ -297,16 +303,17 @@ class SimUI {
 
             g("div", {klass: ["regOuter", "tOuter"]}, [
                 g("div", {innerText: "Registers"}),
-                g("div", {klass: ["reg", "tCont"]}, genArr(16, "s", el.reg))
+                g("div", {klass: ["reg", "tCont"]}, [
+                    ...genArr(16, "s", el.reg),
+                    g("div", {klass: "tHeader", innerText: "Other registers"}),
+                    ...genSpec()
+
+                ])
             ]),
 
             g("div", {klass: ["stackOuter", "tOuter"]}, [
                 g("div", {innerText: "Stack"}),
                 g("div", {klass: ["stack", "tCont"]}, genArr(32, "", el.stack))
-            ]),
-            g("div", {klass: ["specOuter", "tOuter"]}, [
-                g("div", {innerText: "Other registers"}),
-                g("div", {klass: ["spec", "tCont"]}, genSpec())
             ]),
     
             g("div", {klass: "simModOuter"}, [
@@ -371,10 +378,10 @@ class SimUI {
 }
 
 class SimMod {
-    constructor(name, updateHand, addrList) {
+    constructor(name, updateHand, addrList, span) {
         this.updateHand = updateHand
         this.addr = addrList
-        this.#genContainer(name, addrList)
+        this.#genContainer(name, addrList, span)
     }
 
     #delete() {
@@ -385,7 +392,7 @@ class SimMod {
         this.contEl.remove()
     }
 
-    #genContainer(name, addrList) {
+    #genContainer(name, addrList, span) {
         this.el = {}
 
         const g = SimUI.htmlGen.bind(this)
@@ -406,7 +413,12 @@ class SimMod {
             return o
         }
 
-        this.contEl = g("div", {klass: "modOuter"}, [
+        if (!span) {
+            span = {x: 1, y: 1}
+        }
+        const style = `--spanX: ${span.x}; --spanY: ${span.y}`
+
+        this.contEl = g("div", {klass: "modOuter", style: style}, [
             g("div", {klass: "modHeader"}, [
                 g("div", {innerText: name}),
                 g("input", {type: "button", value: "X", event: e => this.#delete()}),

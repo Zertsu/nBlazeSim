@@ -1,3 +1,38 @@
+.simCont {
+    display: grid;
+    grid-template-columns: 280px 130px 170px 70px 1fr;
+    grid-template-rows: auto;
+    grid-template-areas:
+        "contr contr contr contr contr"
+        "pmem regs dmem stack mods"
+        "pmem regs dmem stack mods";
+}
+
+
+.controls {
+    grid-area: contr;
+}
+.pmemOuter {
+    grid-area: pmem;
+}
+.dmemOuter {
+    grid-area: dmem;
+}
+.regOuter {
+    grid-area: regs;
+}
+.stackOuter {
+    grid-area: stack;
+}
+.simModOuter {
+    grid-area: mods;
+}
+
+.tHeader {
+    text-align: center;
+}
+
+
 .tCont > div {
     border: 1px solid darkgray;
 }
@@ -60,7 +95,6 @@
 
 .modOuter {
     background-color: beige;
-    width: 200px;
 }
 
 .modOuter > div:first-child
@@ -83,4 +117,17 @@
 
 .modOuter input[type='text'] {
     min-width: 0;
+}
+
+.modsCont {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, 250px);
+    grid-auto-flow: row dense;
+    grid-auto-rows: 100px;
+}
+
+.modOuter {
+    margin: 5px;
+    grid-column: span var(--spanX);
+    grid-row: span var(--spanY);
 }

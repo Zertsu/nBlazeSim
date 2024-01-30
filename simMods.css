@@ -38,3 +38,15 @@
 .stackContent > div {
     visibility: hidden;
 }
+
+.stackContent {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: repeat(var(--stackH), 1fr);
+    grid-auto-flow: column
+}
+
+.stackContent > div {
+    height: 18px;
+    text-align: center;
+}

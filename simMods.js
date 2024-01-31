@@ -19,6 +19,11 @@ class LedMod extends SimMod {
         this.el.modCont.appendChild(this.#genUI())
     }
 
+    reset() {
+        this.state = {leds: 0}
+        this.updateReq = true
+    }
+
     callbacks = [(rw, data, addr) => {
         if (rw == "r") {
             return this.state.leds
@@ -76,6 +81,10 @@ class SwitchMod extends SimMod {
         this.el.modCont.appendChild(this.#genUI())
     }
 
+    reset() {
+        // do nothing
+    }
+
     callbacks = [(rw, data, addr) => {
         if (rw == "r") {
             return this.state.switches
@@ -121,6 +130,11 @@ class StackMod extends SimMod {
         this.state = {stack: []}
         this.updateReq = false
         this.el.modCont.appendChild(this.#genUI())
+    }
+
+    reset() {
+        this.state = {stack: []}
+        this.updateReq = true
     }
 
     callbacks = [

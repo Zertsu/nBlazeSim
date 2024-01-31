@@ -34,6 +34,9 @@ class SimUI {
     reset() {
         this.running = false
         this.sim.reset()
+        for (const m of this.actMods) {
+            m.reset()
+        }
         this.#updateUI()
         this.#updateButtons()
     }

@@ -1,6 +1,6 @@
 .simCont {
     display: grid;
-    grid-template-columns: 280px 130px 170px 70px 1fr;
+    grid-template-columns: 280px 130px 170px 85px 1fr;
     grid-template-rows: auto;
     grid-template-areas:
         "contr contr contr contr contr"

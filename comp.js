@@ -236,6 +236,11 @@ class Comp {
         return n
     }
 
+    static isSelfJump(addr, instr) {
+        return  (instr >> 12) === 0b100010 &&
+                (instr & 0b111111111111) === addr
+    }
+
     #rOpCodes = {
         0b000001: "LOAD sX, kk",
         0b000000: "LOAD sX, sY",

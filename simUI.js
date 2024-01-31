@@ -205,7 +205,12 @@ class SimUI {
                         } else {
                             this.breakPoints.delete(i)
                         }
-                    }}}),
+                    }}, after: e => {
+                        if (Comp.isSelfJump(i, p.bytecode[i])) {
+                            e.checked = true
+                            this.breakPoints.add(i)
+                        }
+                    }}),
                     g("div", {innerText: p.lineLabels[i] == undefined ? i : i + " " + p.lineLabels[i]}),
                     g("div", {innerText: p.bytecode2str(p.bytecode[i])})
                 ]))
@@ -318,7 +323,12 @@ class SimUI {
     
             g("div", {klass: "simModOuter"}, [
                 g("div", {klass: "modSelector"}, [
-                    g("select", {after: (e) => el.modSel = e, event: {change: genSelModOpts}}, 
+                    g("select", {event: {change: genSelModOpts}, after: (e) => {
+                        el.modSel = e
+                        if (this?.el?.modSel !== undefined) {
+                            e.value = this.el.modSel.value
+                        }
+                    }}, 
                         genModOpt()
                     ),
                     g("div", {klass: "modOpt", after: (e) => el.modSelOut = e})

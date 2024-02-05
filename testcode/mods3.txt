@@ -1,0 +1,22 @@
+LOAD s0, 1
+
+start:
+LOAD s1, 8
+
+l:
+OUTPUT s0, (s1)
+ADD s1, 1
+RL s0
+COMP s1, 10
+JUMP C, l
+
+LOAD s1, 8
+
+l2:
+INPUT s0, (s1)
+STORE s0, (s1)
+ADD s1, 1
+COMP s1, 10
+JUMP C, l2
+
+JUMP start

@@ -1,3 +1,23 @@
+/* Generic */
+.twoCol {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: repeat(var(--stackH), 1fr);
+    grid-auto-flow: column;
+}
+
+.twoCol > div {
+    height: 18px;
+    margin: 0 10%;
+    text-align: center;
+}
+
+.twoCol > div > div {
+    display: inline-block;
+    width: 50%;
+}
+
+
 /* LedMod */
 .ledCont {
     --led-size: 15px;
@@ -34,19 +54,6 @@
 
 
 /* Stack */
-
 .stackContent > div {
     visibility: hidden;
-}
-
-.stackContent {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: repeat(var(--stackH), 1fr);
-    grid-auto-flow: column
-}
-
-.stackContent > div {
-    height: 18px;
-    text-align: center;
 }

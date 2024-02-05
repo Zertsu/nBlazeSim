@@ -1,7 +1,7 @@
 "use strict";
 
 class SimUI {
-    mods = [LedMod, SwitchMod, StackMod]
+    mods = [LedMod, SwitchMod, StackMod, MemMapMod]
 
 
     constructor(parentElement, prog, srcElement) {
@@ -121,13 +121,26 @@ class SimUI {
                     const cb = m.callbacks[i].bind(m);
                     const info = m.addr[i]
                     for (const t of info.addr.split(',')) {
-                        if (info.rw == "w" || info.rw == "r") {
-                            this.ports[info.rw][parseInt(t)] = cb
-                        } else if (t[0] == "w" || t[0] == "r") {
-                            this.ports[t[0]][parseInt(t.substring(1))] = cb
-                        } else {
-                            const id = parseInt(t)
-                            this.ports.r[id] = this.ports.w[id] = cb
+                        const res = t.match(/(r|w)?((\d+):)?(\d+)(-(\d+))?/)
+                        if (!res) {continue}
+                        const rw = res[1] ?? "rw"
+                        const offset = res[3] ? parseInt(res[3]) : 0
+                        const addr = parseInt(res[4])
+                        const stopAddr = res[6] ? parseInt(res[6]) + 1 : addr + 1
+                        const toAddTo = []
+                        if (info.rw.includes("r") && rw.includes("r")) {
+                            toAddTo.push(this.ports.r)
+                        }
+                        if (info.rw.includes("w") && rw.includes("w")) {
+                            toAddTo.push(this.ports.w)
+                        }
+                        const cbm = (rw, data, caddr) => {
+                            return cb(rw, data, caddr - addr + offset)
+                        }
+                        for (let j = addr; j < stopAddr; j++) {
+                            for (const l of toAddTo) {
+                                l[j] = cbm
+                            }
                         }
                     }
                 }

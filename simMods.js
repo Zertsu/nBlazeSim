@@ -193,7 +193,65 @@ class StackMod extends SimMod {
                 g("span", {innerText: "Length: "}),
                 g("span", {innerText: "0", after: e => this.el.lenEl = e})
             ]),
-            g("div", {klass: "stackContent", style: `--stackH: ${this.size / 2}`}, genList())
+            g("div", {klass: ["twoCol", "stackContent"], style: `--stackH: ${this.size / 2}`}, genList())
         ])
+    }
+}
+
+class MemMapMod extends SimMod {
+    static name = "MemMap"
+    static opts = [
+        {op: "size", type: "number", val: 8, desc: "Size"}
+    ]
+
+    constructor(opts, callbacks) {
+        super("MemMap", callbacks, [
+            {addr: `8-${7 + opts.size}`, rw: "rw", desc: "Data"}
+        ], {x: 1, y: Math.ceil(opts.size / 2 * 18 / 100) + 1})
+        this.size = opts.size
+        this.state = {data: Array(this.size).fill(0)}
+        this.el.modCont.appendChild(this.#genUI())
+    }
+
+    reset() {
+        this.state = {data: Array(this.size).fill(0)}
+        this.updateReq = true
+    }
+
+    callbacks = [(rw, data, addr) => {
+        if (rw == "r") {
+            return this.state.data[addr % this.size]
+        }
+        if (rw == "w") {
+            this.state.data[addr % this.size] = data
+            this.updateReq = true
+        }
+    }]
+
+    updateUI() {
+        if (!this.updateReq) {
+            return
+        }
+        for (let i = 0; i < this.size; i++) {
+            this.el.dvals[i].innerText = this.state.data[i]
+        }
+        this.updateReq = false
+    }
+
+    #genUI() {
+        const g = SimUI.htmlGen.bind(this)
+        this.el.dvals = []
+        
+        const genList = () => {
+            const o = []
+            for (let i = 0; i < this.size; i++) {
+                o.push(g("div", {}, [
+                    g("div", {innerText: `${i}`}),
+                    g("div", {innerText: "0", after: e => this.el.dvals[i] = e})
+                ]))
+            }
+            return o
+        }
+        return g("div", {klass: "twoCol", style: `--stackH: ${this.size / 2}`}, genList())
     }
 }

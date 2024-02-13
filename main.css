@@ -131,3 +131,7 @@
     grid-column: span var(--spanX);
     grid-row: span var(--spanY);
 }
+
+.modOuter .modSel > div.intEnLine {
+    grid-template-columns: 20px auto;
+}

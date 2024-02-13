@@ -80,8 +80,6 @@ class SimUI {
 
     trigInt() {
         this.sim.trigInt()
-        this.sim.runCycle()
-        this.sim.disInt()
         this.#updateUI()
     }
 
@@ -145,7 +143,8 @@ class SimUI {
                     }
                 }
             }
-        } 
+        },
+        trigInter: e => this.sim.trigInt()
     }
 
     addModule(mod, opts) {
@@ -251,7 +250,7 @@ class SimUI {
 
         const genSpec = () => {
             const arr = []
-            for (const e of ["PC", "ZF", "CF", "intEn"]) {
+            for (const e of ["PC", "ZF", "CF", "intEn", "intRq"]) {
                 const iel = g("div")
                 arr.push(g("div", {}, [
                     g("div", {innerText: e}),
@@ -388,6 +387,7 @@ class SimUI {
         el.PC.innerText = s.PC
         el.ZF.innerText = s.ZF
         el.CF.innerText = s.CF
+        el.intRq.innerText = s.intrq
         el.intEn.innerText = s.intEn
         el.btn.inter.disabled = ! s.intEn
     
@@ -404,10 +404,17 @@ class SimUI {
 }
 
 class SimMod {
-    constructor(name, updateHand, addrList, span) {
+    constructor(name, updateHand, hasInt, addrList, span) {
         this.updateHand = updateHand
         this.addr = addrList
+        this.hasInt = hasInt
         this.#genContainer(name, addrList, span)
+    }
+
+    interrupt() {
+        if (this.enInt) {
+            this.updateHand.trigInter()
+        }
     }
 
     #delete() {
@@ -434,6 +441,15 @@ class SimMod {
                     }}}),
                     g("span", {innerText: add.rw}),
                     g("span", {innerText: add.desc})
+                ]))
+            }
+            if (this.hasInt) {
+                this.enInt = false
+                o.push(g("div", {klass: "intEnLine"}, [
+                    g("input", {type: "checkbox", event: {change: e => {
+                        this.enInt = e.target.checked
+                    }}}),
+                    g("span", {innerText: "Enable interrupts"})
                 ]))
             }
             return o

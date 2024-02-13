@@ -31,14 +31,11 @@ class Sim {
         this.intrq = true
     }
 
-    disInt() {
-        this.intrq = false
-    }
-
     runCycle() {
         const s = this
         
         if (s.intEn && s.intrq) {
+            this.intrq = false
             s.stack.push(s.PC)
             s.PC = 0x3FF
             return

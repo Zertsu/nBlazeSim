@@ -7,7 +7,7 @@ class LedMod extends SimMod {
     ]
 
     constructor(opts, callbacks) {
-        super("LEDs", callbacks, [
+        super("LEDs", callbacks, false, [
             {addr: "w1", rw: "rw", desc: "Leds"}
         ])
         this.state = {leds : 0}
@@ -70,7 +70,7 @@ class SwitchMod extends SimMod {
     ]
 
     constructor(opts, callbacks) {
-        super("Switches", callbacks, [
+        super("Switches", callbacks, false, [
             {addr: "2", rw: "r", desc: "Switches"}
         ])
         this.state = {switches: 0}
@@ -120,7 +120,7 @@ class StackMod extends SimMod {
     ]
 
     constructor(opts, callbacks) {
-        super("Stack", callbacks, [
+        super("Stack", callbacks, true, [
             {addr: "3", rw: "rw", desc: "Push/Pop"},
             {addr: "4", rw: "r", desc: "Length"}
         ], 
@@ -142,12 +142,18 @@ class StackMod extends SimMod {
             if (rw == "r") {
                 const e = this.state.stack.pop()
                 this.updateReq = true
-                return e === undefined ? 0 : e
+                if (e === undefined) {
+                    this.interrupt()
+                    return 0
+                }
+                return e
             }
             if (rw == "w") {
                 if (this.state.stack.length < this.size) {
                     this.state.stack.push(data)
                     this.updateReq = true
+                } else {
+                    this.interrupt()
                 }
             }
         },
@@ -205,7 +211,7 @@ class MemMapMod extends SimMod {
     ]
 
     constructor(opts, callbacks) {
-        super("MemMap", callbacks, [
+        super("MemMap", callbacks, false, [
             {addr: `8-${7 + opts.size}`, rw: "rw", desc: "Data"}
         ], {x: 1, y: Math.ceil(opts.size / 2 * 18 / 100) + 1})
         this.size = opts.size

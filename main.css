@@ -1,7 +1,64 @@
+body {
+    margin: 0;
+}
+
+textarea {
+    resize: none;
+}
+
+#newCompBtn {
+    margin: 5px;
+}
+
+.compCont {
+    width: 99%;
+    min-height: 95vh;
+    margin: 5px;
+    display: grid;
+    grid-template-columns: repeat(4, 65px);
+    grid-template-rows: 22px;
+    grid-template-areas:
+        "delBtn  compBtn expBtn  binBtn  simContainer"
+        "srcText srcText srcText srcText simContainer"
+}
+.compCont.showBin {
+    grid-template-columns: repeat(4, 65px) 160px;
+    grid-template-areas: 
+        "delBtn  compBtn expBtn  binBtn  .       simContainer"
+        "srcText srcText srcText srcText binText simContainer"
+}
+
+.compBtn {
+    grid-area: compBtn;
+}
+.expBtn {
+    grid-area: expBtn;
+}
+.binBtn {
+    grid-area: binBtn;
+}
+.srcText {
+    grid-area: srcText;
+}
+.binText {
+    grid-area: binText;
+    display: none;
+}
+.compCont.showBin .binText {
+    display: initial;
+}
+.simContainer {
+    grid-area: simContainer;
+    margin-left: 5px;
+}
+
+
+
 .simCont {
+    height: 100%;
     display: grid;
     grid-template-columns: 280px 130px 170px 85px 1fr;
-    grid-template-rows: auto;
+    grid-template-rows: min-content auto;
     grid-template-areas:
         "contr contr contr contr contr"
         "pmem regs dmem stack mods"
@@ -62,6 +119,14 @@
     background-color: lightcoral;
 }
 
+
+.tCont.pmem {
+    grid-auto-flow: row;
+    overflow-y: auto;
+    height: 0;
+    min-height: calc(100% - 20px);
+    grid-template-rows: repeat(4096, 1fr);
+}
 .pmem > div > *:nth-child(2) {
     width: 100px;
 }

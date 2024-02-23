@@ -4,9 +4,8 @@ class SimUI {
     mods = [LedMod, SwitchMod, StackMod, MemMapMod]
 
 
-    constructor(parentElement, prog, srcElement) {
+    constructor(parentElement, prog) {
         this.prog = prog
-        this.srcElement = srcElement
         this.sim = new Sim(prog.bytecode, this.#hanPortReq.bind(this))
         this.parentElement = parentElement
 
@@ -21,9 +20,9 @@ class SimUI {
         this.#updateUI()
     }
 
-    recompile() {
+    replaceCode(prog) {
         this.running = false
-        this.prog = new Comp(this.srcElement.value)
+        this.prog = prog
         this.sim.pmem = this.prog.bytecode
         this.sim.reset()
         this.breakPoints.clear()
@@ -45,7 +44,12 @@ class SimUI {
         if(!this.running) {
             this.sim.runCycle()
             this.#updateUI()
+            this.#scrollIntoView()
         }
+    }
+
+    #scrollIntoView() {
+        this.el.pmem[this.sim.PC].scrollIntoView({block: "nearest", inline: "nearest"})
     }
 
     run(state) {
@@ -187,6 +191,11 @@ class SimUI {
                     }
                 }
             }
+            if (opts.attr !== undefined) {
+                for (const att in opts.attr) {
+                    el.setAttribute(att, opts.attr[att])
+                }
+            }
             if (opts.after instanceof Function) {
                 opts.after(el)
             }
@@ -233,13 +242,14 @@ class SimUI {
             return arr
         }
 
-        const genArr = (len, prefix, store) => {
+        const genArr = (len, prefix, store, base) => {
             const arr = []
+            base ??= 10
             for (let i = 0; i < len; i++) {
                 const iel = g("div")
                 arr.push(g(
                     "div", {}, [
-                        g("div", {innerText: prefix + i}),
+                        g("div", {innerText: prefix + i.toString(base).toUpperCase()}),
                         iel
                     ]
                 ))
@@ -302,8 +312,6 @@ class SimUI {
 
         const cont = g("div", {klass: "simCont"}, [
             g("div", {klass: "controls"}, [
-                g("input", {type: "button", value: "Delete",    event: this.delete}),
-                g("input", {type: "button", value: "Recompile", event: this.recompile}),
                 g("input", {type: "button", value: "Reset"    , klass: "rstBtn" , event: this.reset  , after: (e) => el.btn.rst = e  }),
                 g("input", {type: "button", value: "Interrupt", klass: "intBtn" , event: this.trigInt, after: (e) => el.btn.inter = e}),
                 g("input", {type: "button", value: "Step"     , klass: "stepBtn", event: this.step   , after: (e) => el.btn.step = e }),
@@ -324,7 +332,7 @@ class SimUI {
             g("div", {klass: ["regOuter", "tOuter"]}, [
                 g("div", {innerText: "Registers"}),
                 g("div", {klass: ["reg", "tCont"]}, [
-                    ...genArr(16, "s", el.reg),
+                    ...genArr(16, "s", el.reg, 16),
                     g("div", {klass: "tHeader", innerText: "Other registers"}),
                     ...genSpec()
 

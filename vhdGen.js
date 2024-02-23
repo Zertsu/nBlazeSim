@@ -18,8 +18,10 @@ class vhdGen {
         const off = d.getTimezoneOffset()
         const aOff = Math.abs(off)
 
-        return  `${d.getDate()} ${mon[d.getMonth()]} ${d.getFullYear()} - ` +
-                `${d.getHours()}:${d.getMinutes()}:${d.getSeconds()} ` + 
+        return  `${String(d.getDate()).padStart(2, "0")} ${mon[d.getMonth()]} ${d.getFullYear()} - ` +
+                `${String(d.getHours()).padStart(2, "0")}:` +
+                `${String(d.getMinutes()).padStart(2, "0")}:` + 
+                `${String(d.getSeconds()).padStart(2, "0")} ` + 
                 `${off <= 0 ? "+" : "-"}` + 
                 `${String(Math.floor(aOff / 60)).padStart(2, "0")}` + 
                 `${String(aOff % 60).padStart(2, "0")}`

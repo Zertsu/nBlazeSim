@@ -3,6 +3,7 @@
 class Comp {
 
     static defaultConstBase = 16
+    static #regRe = /^s([0-9a-fA-F])$/
     constructor(code) {
         this.src = code
         this.#translateCode()
@@ -16,66 +17,108 @@ class Comp {
         return o
     }
     
-    #parseConst(str) {
+    #parseConst(str, limit) {
+        limit ??= 255
         const bases = {
             "0b": 2,
             "0o": 8,
             "0d": 10,
             "0x": 16
         }
-        var base = bases[str.substring(0, 2)]
-        if (base == undefined) {
-            return parseInt(str, Comp.defaultConstBase)
+        let base = bases[str.substring(0, 2)]
+        if (base === undefined) {
+            base = Comp.defaultConstBase
+        } else {
+            str = str.substring(2)
         }
-        return parseInt(str.substring(2), base)
+        const val = parseInt(str, base)
+        if (isNaN(val)) {
+            throw new CompError(`Constant value "${str}" is not valid`)
+        }
+        if (val < 0 || val > limit) {
+            throw new CompError(`Constant value "${str}" out of range 0-${limit}`)
+        }
+        return val
     }
     
-    #syorkk(args) {
-        var o = 0
+    #syorkk(args, kklimit) {
+        if (args.length !== 2) {
+            throw new CompError(`${args.length < 2 ? "Not enough" : "Too many"} arguments`)
+        }
+        let o = 0
         if (this.regNames[args[0]] != undefined) {
             o |= this.regNames[args[0]] << 8
         } else {
-            o |= parseInt(args[0].substring(1), 16) << 8
+            const m = args[0].match(Comp.#regRe)
+            if (!m) {
+                throw new CompError(`Unknown register ${args[0]}`)
+            }
+            const regX = parseInt(m[1], 16)
+            if (regX < 0 || regX > 15) {
+                throw new CompError(`Unknown register index ${regX}`)
+            }
+            o |=  regX << 8
         }
 
         if (this.regNames[args[1]] != undefined) {
             o |= this.regNames[args[1]] << 4
-        } else if(args[1][0] == 's') {
-            o |= parseInt(args[1].substring(1), 16) << 4
         } else {
-            o |= this.#parseConst(args[1]) | 1 << 12
+            const m = args[1].match(Comp.#regRe)
+            if(m) {
+                const regY = parseInt(m[1], 16)
+                if (regY < 0 || regY > 15) {
+                    throw new CompError(`Unknown register index ${regX}`)
+                }
+                o |= regY << 4
+            } else {
+                o |= this.#parseConst(args[1], kklimit) | 1 << 12
+            }
         }
         return o
     }
     
-    #handleT(opcode, str) {
-        var o = opcode << 12
+    #handleT(opcode, str, kklimit) {
+        let o = opcode << 12
         const args = this.#tokenize(str)
-        o |= this.#syorkk(args)
+        o |= this.#syorkk(args, kklimit)
         return [o, null]
     }
     
     #handleSR(ext, str) {
-        var o = 0b010100 << 12
+        let o = 0b010100 << 12
         const reg = str.trim()
         if (this.regNames[reg]) {
             o |= this.regNames[reg] << 8
         } else {
-            o |= parseInt(reg.substring(1)) << 8
+            const m = str.match(Comp.#regRe)
+            if (m) {
+                const reg  = parseInt(m[1], 16)
+                if (reg < 0 || reg > 15) {
+                    throw new CompError(`Unknown register index ${regX}`)
+                }
+                o |= reg << 8
+            }
         }
         o |= ext
         return [o, null]
     }
     
-    #handleJmp(type, str) {
-        var o = 0b100000 << 12
-        var jumpLab = null
+    #handleJmp(type, str, arglim) {
+        let o = 0b100000 << 12
         const args = this.#tokenize(str)
+        if (arglim) {
+            if (args.length !== arglim) {
+                throw new CompError(`${args.length < arglim ? "Not enough" : "Too many"} arguments`)
+            }
+        } else {
+            if (args.length == 0 || args.length > 2) {
+                throw new CompError(`${args.length < 1 ? "Not enough" : "Too many"} arguments`)
+            }
+        }
         switch (type) {
             case "jump":
                 o |= 0b000010 << 12
             case "call":
-                jumpLab = args[1]
                 break
             case "return":
                 if (args[0] == "") {
@@ -87,6 +130,9 @@ class Comp {
                 break
             case "reti":
                 o |= 0b001001 << 12
+                if(!args[0].match(/^(E|D)$/)) {
+                    throw new CompError(`Invalid argument: ${args[0]}`)
+                }
                 o |= args[0] == "E" ? 1 : 0
                 return [o, null]
             case "eni":
@@ -102,7 +148,7 @@ class Comp {
             return [o, args[0]]
         }
     
-        var cond = 0
+        let cond = 0
         switch (args[0]) {
             case "Z":
                 cond = 0b100
@@ -117,7 +163,7 @@ class Comp {
                 cond = 0b111
                 break
             default:
-                break
+                throw new CompError(`Unknown condition: ${args[0]}`)
         }
         o |= cond << 14
         return [o, args[1]]
@@ -126,9 +172,9 @@ class Comp {
     #opCodes = {
         "LOAD"       : str => this.#handleT(0b000000, str),
         "INPUT"      : str => this.#handleT(0b001000, str),
-        "FETCH"      : str => this.#handleT(0b001010, str),
+        "FETCH"      : str => this.#handleT(0b001010, str, 63),
         "OUTPUT"     : str => this.#handleT(0b101100, str),
-        "STORE"      : str => this.#handleT(0b101110, str),
+        "STORE"      : str => this.#handleT(0b101110, str, 63),
         "AND"        : str => this.#handleT(0b000010, str),
         "OR"         : str => this.#handleT(0b000100, str),
         "XOR"        : str => this.#handleT(0b000110, str),
@@ -151,9 +197,9 @@ class Comp {
         "JUMP"       : str => this.#handleJmp("jump", str),
         "CALL"       : str => this.#handleJmp("call", str),
         "RETURN"     : str => this.#handleJmp("return", str),
-        "RETURNI"    : str => this.#handleJmp("reti", str),
-        "ENINTERR"   : str => this.#handleJmp("eni", str),
-        "DISINTERR"  : str => this.#handleJmp("disi", str)
+        "RETURNI"    : str => this.#handleJmp("reti", str, 1),
+        "ENINTERR"   : str => this.#handleJmp("eni", str, 0),
+        "DISINTERR"  : str => this.#handleJmp("disi", str, 0)
     }
 
     #dirs = {
@@ -162,16 +208,14 @@ class Comp {
             this.regNames[args[1]] = parseInt(args[0].substring(1))
         },
         "ADDRESS" : str => {
-            this.bytecodeIndex = this.#parseConst(str.trim())
+            this.bytecodeIndex = this.#parseConst(str.trim(), 4095)
         }
     }
     
     #translateCode() {
         let lines = this.src
-            .replaceAll("(", "")
-            .replaceAll(")", "")
-            .replaceAll(/(\/\/.*)\n/g, "")
-            .replaceAll(/( *; *)/g, ";")
+            .replaceAll(/(\(|\))/g, "")
+            .replaceAll(/;.*\n/g, "\n")
             .replaceAll(/([ \t]*\n[ \t]*)/gm, "\n")
             .split('\n')
         
@@ -184,14 +228,17 @@ class Comp {
         let lableQ = []
         this.bytecodeIndex = 0;
         for (let i = 0; i < lines.length; i++) {
-            const fullline = lines[i].split(";")
-            for (let j = 0; j < fullline.length; j++) {
-                const line = fullline[j];
+            try {
+                const line = lines[i]
                 if (line === "") {continue}
                 const lsplit = line.split(":")
                 let comm
                 if (lsplit.length > 1) {
-                    lableQ.push(lsplit[0].trim())
+                    const label = lsplit[0].trim()
+                    if (label in this.labels || lableQ.includes(label)) {
+                        throw new CompError(`Label "${label}" already exists`, i)
+                    }
+                    lableQ.push(label)
                     comm = lsplit[1].trim()
                 } else {
                     comm = line.trim()
@@ -204,19 +251,34 @@ class Comp {
                     this.#dirs[comm[0].toUpperCase()](comm.slice(1).join(' '))
                     continue
                 }
-                let inst, jtar
-                [inst, jtar] = this.#opCodes[comm[0].toUpperCase()](comm.slice(1).join(' '))
+                const instHan = this.#opCodes[comm[0].toUpperCase()]
+                if (!instHan) {
+                    throw new CompError(`Unknown instruction: ${comm[0]}`, i)
+                }
+                const [inst, jtar] = instHan(comm.slice(1).join(' '))
                 this.jumpTarg[this.bytecodeIndex] = jtar
                 while (lableQ.length) {
                     this.labels[lableQ.pop()] = this.bytecodeIndex
                 }
                 this.addr2src[this.bytecodeIndex] = i
+                if (this.bytecode[this.bytecodeIndex] !== undefined) {
+                    throw new CompError(`Memory intersection at address ${this.bytecodeIndex}`, i)
+                }
                 this.bytecode[this.bytecodeIndex++] = inst
+            } catch (err) {
+                if (err instanceof CompError) {
+                    err.line = i
+                }
+                throw err
             }
         }
         for (let i = 0; i < this.bytecode.length; i++) {
             if (this.jumpTarg[i] == null) {
                 continue
+            }
+            const tarAddr = this.labels[this.jumpTarg[i]]
+            if (tarAddr === undefined) {
+                throw new CompError(`Unknown label "${this.jumpTarg[i]}"`, this.addr2src[i])
             }
             this.bytecode[i] |= this.labels[this.jumpTarg[i]]
         }
@@ -225,6 +287,10 @@ class Comp {
             this.lineLabels[this.labels[key]] = key
         }
         this.bytecodeIndex = undefined
+
+        if(!this.bytecode.length) {
+            throw new CompError("Input contains no instructions", 0)
+        }
     }
 
     static bytecode2bin(code) {
@@ -330,7 +396,7 @@ class Comp {
                 txt += intEN == 1 ? " E" : " D"
                 break
             case "INTERR":
-                txt = intEN == 1 ? "INTERR" : "DISINTERR"
+                txt = intEN == 1 ? "ENINTERR" : "DISINTERR"
                 break
             default: break
         }
@@ -343,5 +409,13 @@ class Comp {
             .replace("sa", sa)
             .replace("addr", label ? label : addr)
         return txt
+    }
+}
+
+class CompError extends Error {
+    constructor(message, line) {
+        super(message)
+        this.name = "CompError"
+        this.line = line
     }
 }

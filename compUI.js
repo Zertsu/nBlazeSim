@@ -8,7 +8,17 @@ class CompUI {
     }
 
     compile() {
-        this.prog = new Comp(this.srcEl.value)
+        const src = this.srcEl.value
+        try {
+            this.prog = new Comp(src)
+        } catch (err) {
+            if (err instanceof CompError) {
+                alert(`Error on line ${err.line + 1}:\n\t${src.split("\n")[err.line]}\n${err.message}`)
+            } else {
+                alert(`Unknown error:\n${err.message}\nCall stack:\n${err.stack}`)
+            }
+            return
+        }
         this.binEl.value = this.#bytecodeToStr(this.prog.bytecode)
         if (!this.simUI) {
             this.simUI = new SimUI(this.simEl, this.prog)

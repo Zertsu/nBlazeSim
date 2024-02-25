@@ -13,11 +13,11 @@ SUB s0, 8
 JUMP start
 up: ADD s0, 8
 JUMP start
-end: STORE s0, s(s1)
+end: STORE s0, (s1)
 endend: JUMP endend
 
 inthan:
-ADD s15, 1
+ADD sF, 1
 RETURN
 ADDRESS 3FF
 JUMP inthan

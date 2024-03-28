@@ -1,10 +1,11 @@
 "use strict";
 
 class vhdGen {
+    static #templateURL = "ROM_form.vhd"
     static #template = undefined
 
     static async #getTemplate() {
-        const response = await fetch("ROM_form.vhd")
+        const response = await fetch(this.#templateURL)
         const data = await response.text()
         this.#template = data
     }

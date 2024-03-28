@@ -1,7 +1,7 @@
 "use strict";
 
 class vhdGen {
-    static #templateURL = "ROM_form.vhd"
+    static #templateURL = "https://raw.githubusercontent.com/ptracton/Picoblaze/master/Picoblaze/ROM_form_templates/ROM_form_JTAGLoader_14March13.vhd"
     static #template = undefined
 
     static async #getTemplate() {

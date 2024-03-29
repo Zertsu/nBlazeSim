@@ -286,9 +286,12 @@ class SimUI {
             let inputs = {}
             for (let i = 0; i < cl.opts.length; i++) {
                 const op = cl.opts[i];
+                const attr = {}
+                if(op.min) {attr.min = op.min}
+                if(op.max) {attr.max = op.max}
                 arr.push(g("div", {}, [
                     g("span", {innerText: op.desc}),
-                    g("input", {type: op.type, value: op.val, after: (e) => inputs[op.op] = e})
+                    g("input", {type: op.type, value: op.val, attr: attr, after: (e) => inputs[op.op] = e})
                 ]))
             }
             arr.push(g("div", {}, [
@@ -298,6 +301,20 @@ class SimUI {
                         let v = value.value
                         if (value.type == "number") {
                             v = parseInt(v)
+                            if(value.max !== undefined) {
+                                const maxval = parseInt(value.max)
+                                if(v > maxval) {
+                                    alert(`Value must be at most ${maxval}`)
+                                    return
+                                }
+                            }
+                            if(value.min !== undefined) {
+                                const minval = parseInt(value.min)
+                                if(v < minval) {
+                                    alert(`Value must be at least ${minval}`)
+                                    return
+                                }
+                            }
                         }
                         opts[key] = v
                     }

@@ -26,6 +26,32 @@ class Sim {
         this.intEn = true
         this.intrq = false
     }
+
+    setState(r, v) {
+        let tar, ind
+        if (Array.isArray(r)) {
+            tar = r[0]
+            ind = r[1]
+        } else {
+            tar = r
+            ind = 0
+        }
+        const b = (v) => {
+            v = v.toLowerCase()
+            return ["true", "1"].includes(v)
+        }
+        switch (tar) {
+            case "PC":    this.PC = parseInt(v)         ; break
+            case "ZF":    this.ZF = b(v)                ; break
+            case "CF":    this.CF = b(v)                ; break
+            case "intEn": this.intEn = b(v)             ; break
+            case "intRq": this.intrq = b(v)             ; break
+            case "reg":   this.reg[ind] = parseInt(v)   ; break
+            case "dmem":  this.dmem[ind] = parseInt(v)  ; break
+            case "stack": this.stack[ind] = parseInt(v) ; break
+            default: break;
+        }
+    }
     
     trigInt() {
         this.intrq = true

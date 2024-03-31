@@ -99,6 +99,10 @@ textarea {
     margin-left: 1ch;
     margin-right: 1ch;
 }
+.tCont > div > input.valChange {
+    width: 50px;
+    position: absolute
+}
 
 .tOuter {
     display: inline-block;

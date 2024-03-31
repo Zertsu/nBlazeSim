@@ -49,7 +49,7 @@ class SimUI {
     }
 
     #scrollIntoView() {
-        this.el.pmem[this.sim.PC].scrollIntoView({block: "nearest", inline: "nearest"})
+        this.el.pmem[this.sim.PC]?.scrollIntoView({block: "nearest", inline: "nearest"})
     }
 
     run(state) {
@@ -203,6 +203,30 @@ class SimUI {
         return el
     }
 
+    #modifyState(el, tar) {
+        if (this.running) {return}
+        const switchbackDone = [false];
+        const g = SimUI.htmlGen.bind(this)
+        const changeEl = g("input", {klass: "valChange", type: "text", value: el.innerText, event: {
+            change: e => {
+                if(!switchbackDone[0]) {
+                    switchbackDone[0] = true
+                    e.target.replaceWith(el)
+                }
+                this.sim.setState(tar, e.target.value)
+                this.#updateUI()
+            },
+            focusout: e => {
+                if(!switchbackDone[0]) {
+                    switchbackDone[0] = true
+                    e.target.replaceWith(el)
+                }
+            }
+        }})
+        el.replaceWith(changeEl);
+        changeEl.select()
+    }
+
     #genUI() {
         const el = {btn: {}, dmem: [], pmem: [], reg: [], stack: []}
 
@@ -242,7 +266,7 @@ class SimUI {
             return arr
         }
 
-        const genArr = (len, prefix, store, base) => {
+        const genArr = (len, prefix, store, base, changeName) => {
             const arr = []
             base ??= 10
             for (let i = 0; i < len; i++) {
@@ -253,6 +277,11 @@ class SimUI {
                         iel
                     ]
                 ))
+                if(changeName) {
+                    iel.addEventListener("click", (ce) => {
+                        this.#modifyState(ce.target, [changeName, i])
+                    })
+                }
                 store.push(iel)
             }
             return arr
@@ -266,6 +295,9 @@ class SimUI {
                     g("div", {innerText: e}),
                     iel
                 ]))
+                iel.addEventListener("click", (ce) => {
+                    this.#modifyState(ce.target, e)
+                })
                 el[e] = iel
             }
             return arr
@@ -343,13 +375,13 @@ class SimUI {
 
             g("div", {klass: ["dmemOuter", "tOuter"]}, [
                 g("div", {innerText: "Data Memory"}),
-                g("div", {klass: ["dmem", "tCont"]}, genArr(64, "", el.dmem))
+                g("div", {klass: ["dmem", "tCont"]}, genArr(64, "", el.dmem, undefined, "dmem"))
             ]),
 
             g("div", {klass: ["regOuter", "tOuter"]}, [
                 g("div", {innerText: "Registers"}),
                 g("div", {klass: ["reg", "tCont"]}, [
-                    ...genArr(16, "s", el.reg, 16),
+                    ...genArr(16, "s", el.reg, 16, "reg"),
                     g("div", {klass: "tHeader", innerText: "Other registers"}),
                     ...genSpec()
 
@@ -358,7 +390,7 @@ class SimUI {
 
             g("div", {klass: ["stackOuter", "tOuter"]}, [
                 g("div", {innerText: "Stack"}),
-                g("div", {klass: ["stack", "tCont"]}, genArr(32, "", el.stack))
+                g("div", {klass: ["stack", "tCont"]}, genArr(32, "", el.stack, undefined, "stack"))
             ]),
     
             g("div", {klass: "simModOuter"}, [
@@ -419,7 +451,7 @@ class SimUI {
         for (const e of el.pmemPar.getElementsByClassName("active")) {
             e.classList.remove("active")
         }
-        el.pmem[s.PC].classList.add("active")
+        el.pmem[s.PC]?.classList?.add("active")
 
 
         for (const m of this.actMods) {

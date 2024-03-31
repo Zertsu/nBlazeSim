@@ -288,9 +288,6 @@ class Comp {
         }
         this.bytecodeIndex = undefined
 
-        if(!this.bytecode.length) {
-            throw new CompError("Input contains no instructions", 0)
-        }
     }
 
     static bytecode2bin(code) {

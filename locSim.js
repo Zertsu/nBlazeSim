@@ -1,6 +1,6 @@
 "use strict";
 
-class Sim {
+class locSim {
 
     constructor(pmem, portCallback) {
         this.pmem = pmem

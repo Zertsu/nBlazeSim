@@ -2,10 +2,13 @@
 
 
 class CompUI {
-    constructor(parentElement, simClass) {
+    constructor(parentElement, simClass, genSim) {
         this.parentElement = parentElement
         this.simClass = simClass
         this.parentElement.appendChild(this.mainEl = this.#genUI())
+        if (genSim) {
+            this.compile()
+        }
     }
 
     compile() {

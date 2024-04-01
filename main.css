@@ -165,6 +165,9 @@ textarea {
     visibility: hidden;
 }
 
+.serConCont {
+    padding: 20px;
+}
 
 .modOuter {
     background-color: beige;

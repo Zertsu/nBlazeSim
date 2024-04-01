@@ -7,5 +7,8 @@ document.addEventListener("DOMContentLoaded", function(event){
     document.getElementById("newCompBtn").addEventListener("click", e => {
         compUI = new CompUI(mainCont, locSimUI)
     })
-    compUI = new CompUI(mainCont, locSimUI)
+    document.getElementById("connToHard").addEventListener("click", e => {
+        compUI = new CompUI(mainCont, serSimUI, true)
+    })
+    // compUI = new CompUI(mainCont, locSimUI)
 });

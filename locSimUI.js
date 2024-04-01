@@ -15,6 +15,7 @@ class locSimUI extends SimUI {
     }
 
     replaceCode(prog) {
+        this.running = false
         super.replaceCode(prog)
         this.sim.pmem = this.prog.bytecode
         this.sim.reset()

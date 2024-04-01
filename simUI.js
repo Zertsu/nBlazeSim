@@ -9,7 +9,6 @@ class SimUI {
     }
 
     replaceCode(prog) {
-        this.running = false
         this.prog = prog
         this.breakPoints.clear()
     }
@@ -19,8 +18,8 @@ class SimUI {
         this.updateButtons()
     }
 
-    scrollIntoView() {
-        this.el.pmem[this.sim.PC]?.scrollIntoView({block: "nearest", inline: "nearest"})
+    scrollIntoView(s) {
+        this.el.pmem[s.PC]?.scrollIntoView({block: "nearest", inline: "nearest"})
     }
 
     setRunFreq(period) {
@@ -36,6 +35,10 @@ class SimUI {
         const b = this.el.btn
         b.step.disabled = this.running
         b.run.value = this.running ? "Stop" : "Run"
+    }
+
+    bpchange() {
+        // Do nothing
     }
 
 
@@ -129,8 +132,10 @@ class SimUI {
                     g("input", {type: "checkbox", event: {change: e => {
                         if (e.target.checked) {
                             this.breakPoints.add(i)
+                            this.bpchange()
                         } else {
                             this.breakPoints.delete(i)
+                            this.bpchange()
                         }
                     }}, after: e => {
                         if (Comp.isSelfJump(i, p.bytecode[i])) {

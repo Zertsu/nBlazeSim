@@ -1,0 +1,33 @@
+LOAD sD, 8
+
+start:
+STORE s0, (s1)
+OUTPUT s0, 3
+ADD s1, 1
+COMP s1, 20
+JUMP C, up
+
+l2:
+INPUT s0, 3
+STORE s0, (s1)
+ADD s1, 1
+INPUT s0, 4
+COMP s0, 0
+JUMP NZ, l2
+
+endend: JUMP endend
+
+up: ADD s0, 8
+JUMP start
+
+ADDRESS 300
+intHan:
+INPUT sE, 2
+ADD sF, sE
+OUTPUT sF, 1
+OUTPUT sF, sD
+ADD sD, 1
+RETURN
+
+ADDRESS 3FF
+JUMP intHan

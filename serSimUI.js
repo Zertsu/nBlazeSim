@@ -130,6 +130,11 @@ class serSimUI extends SimUI {
     }
 
     async connectSer() {
+        if (!("serial" in navigator)) {
+            alert("The Web Serial API is not supported by your browser")
+            return
+        }
+
         const s = this.ser
         if(s.port) {
             await s.reader.cancel()

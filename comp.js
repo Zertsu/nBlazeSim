@@ -399,8 +399,8 @@ class Comp {
         }
 
         txt = txt
-            .replace("sX", "s" + sX)
-            .replace("sY", "s" + sY)
+            .replace("sX", "s" + sX.toString(16).toUpperCase())
+            .replace("sY", "s" + sY.toString(16).toUpperCase())
             .replace("kk", kk)
             .replace("PP", kk)
             .replace("sa", sa)

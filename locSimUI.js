@@ -36,7 +36,7 @@ class locSimUI extends SimUI {
         if(!this.running) {
             this.sim.runCycle()
             this.updateUI()
-            this.scrollIntoView()
+            this.scrollIntoView(this.sim)
         }
     }
     

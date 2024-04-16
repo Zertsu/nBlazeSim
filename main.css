@@ -99,6 +99,10 @@ textarea {
     margin-left: 1ch;
     margin-right: 1ch;
 }
+.tCont > div > input.valChange {
+    width: 50px;
+    position: absolute
+}
 
 .tOuter {
     display: inline-block;
@@ -161,9 +165,19 @@ textarea {
     visibility: hidden;
 }
 
+.modSelector {
+    padding: 20px;
+}
+.serConCont {
+    padding: 20px;
+}
 
 .modOuter {
+    margin: 5px;
+    grid-column: span var(--spanX);
+    grid-row: span var(--spanY);
     background-color: beige;
+    padding: 5px;
 }
 
 .modOuter > div:first-child
@@ -181,9 +195,14 @@ textarea {
 
 .modOuter .modSel > div {
     display: grid;
-    grid-template-columns: 4fr 1fr 1fr;
+    grid-template-columns: 50% 20px 1fr;
 }
-
+.modOuter .modSel > div > span:last-child {
+    text-align: end;
+}
+.modOuter .modSel > div.intEnLine > span:last-child {
+    text-align: inherit;
+}
 .modOuter input[type='text'] {
     min-width: 0;
 }
@@ -192,13 +211,7 @@ textarea {
     display: grid;
     grid-template-columns: repeat(auto-fit, 250px);
     grid-auto-flow: row dense;
-    grid-auto-rows: 100px;
-}
-
-.modOuter {
-    margin: 5px;
-    grid-column: span var(--spanX);
-    grid-row: span var(--spanY);
+    grid-auto-rows: 105px;
 }
 
 .modOuter .modSel > div.intEnLine {

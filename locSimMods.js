@@ -3,13 +3,13 @@
 class LedMod extends SimMod {
     static name = "Leds"
     static opts = [
-        {op: "n", type: "number", val: 4, desc: "Number of LEDs"}
+        {op: "n", type: "number", val: 4, min: 1, max: 16, desc: "Number of LEDs"}
     ]
 
     constructor(opts, callbacks) {
         super("LEDs", callbacks, false, [
             {addr: "w1", rw: "rw", desc: "Leds"}
-        ])
+        ], {x: opts.n >= 10 ? 2 : 1, y: 1})
         this.state = {leds : 0}
         this.nleds = 4
         if (opts.n) {
@@ -66,13 +66,13 @@ class LedMod extends SimMod {
 class SwitchMod extends SimMod {
     static name = "Switches"
     static opts = [
-        {op: "n", type: "number", val: 4, desc: "Number of switches"}
+        {op: "n", type: "number", val: 4, min: 1, max: 16, desc: "Number of switches"}
     ]
 
     constructor(opts, callbacks) {
         super("Switches", callbacks, false, [
             {addr: "2", rw: "r", desc: "Switches"}
-        ])
+        ], {x: opts.n >= 10 ? 2 : 1, y: 1})
         this.state = {switches: 0}
         this.nsw = 4
         if (opts.n) {
@@ -116,7 +116,7 @@ class SwitchMod extends SimMod {
 class StackMod extends SimMod {
     static name = "Stack"
     static opts = [
-        {op: "size", type: "number", val: 32, desc: "Size"}
+        {op: "size", type: "number", val: 32, min: 1, max: 128, desc: "Size"}
     ]
 
     constructor(opts, callbacks) {
@@ -207,7 +207,7 @@ class StackMod extends SimMod {
 class MemMapMod extends SimMod {
     static name = "MemMap"
     static opts = [
-        {op: "size", type: "number", val: 8, desc: "Size"}
+        {op: "size", type: "number", val: 8, min: 1, max: 128, desc: "Size"}
     ]
 
     constructor(opts, callbacks) {

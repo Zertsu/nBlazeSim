@@ -288,9 +288,6 @@ class Comp {
         }
         this.bytecodeIndex = undefined
 
-        if(!this.bytecode.length) {
-            throw new CompError("Input contains no instructions", 0)
-        }
     }
 
     static bytecode2bin(code) {
@@ -402,8 +399,8 @@ class Comp {
         }
 
         txt = txt
-            .replace("sX", "s" + sX)
-            .replace("sY", "s" + sY)
+            .replace("sX", "s" + sX.toString(16).toUpperCase())
+            .replace("sY", "s" + sY.toString(16).toUpperCase())
             .replace("kk", kk)
             .replace("PP", kk)
             .replace("sa", sa)

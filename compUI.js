@@ -2,9 +2,13 @@
 
 
 class CompUI {
-    constructor(parentElement) {
+    constructor(parentElement, simClass, genSim) {
         this.parentElement = parentElement
+        this.simClass = simClass
         this.parentElement.appendChild(this.mainEl = this.#genUI())
+        if (genSim) {
+            this.compile()
+        }
     }
 
     compile() {
@@ -21,7 +25,7 @@ class CompUI {
         }
         this.binEl.value = this.#bytecodeToStr(this.prog.bytecode)
         if (!this.simUI) {
-            this.simUI = new SimUI(this.simEl, this.prog)
+            this.simUI = new this.simClass(this.simEl, this.prog)
             this.expBtnEl.disabled = false
         } else {
             this.simUI.replaceCode(this.prog)

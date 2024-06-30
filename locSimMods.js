@@ -1,16 +1,16 @@
 "use strict";
 
 class LedMod extends SimMod {
-    static name = "Leds"
+    static title = "Leds"
     static opts = [
         {op: "n", type: "number", val: 4, min: 1, max: 16, desc: "Number of LEDs"}
     ]
 
-    constructor(opts, callbacks) {
+    constructor(opts, callbacks, state) {
         super("LEDs", callbacks, false, [
             {addr: "w1", rw: "rw", desc: "Leds"}
         ], {x: opts.n >= 10 ? 2 : 1, y: 1})
-        this.state = {leds : 0}
+        this.state = state ?? {leds : 0}
         this.nleds = 4
         if (opts.n) {
             this.nleds = opts.n
@@ -34,8 +34,8 @@ class LedMod extends SimMod {
         }
     }]
 
-    updateUI() {
-        if (!this.updateReq) {
+    updateUI(force) {
+        if (!this.updateReq && !force) {
             return
         }
         let d = this.state.leds
@@ -64,16 +64,16 @@ class LedMod extends SimMod {
 }
 
 class SwitchMod extends SimMod {
-    static name = "Switches"
+    static title = "Switches"
     static opts = [
         {op: "n", type: "number", val: 4, min: 1, max: 16, desc: "Number of switches"}
     ]
 
-    constructor(opts, callbacks) {
+    constructor(opts, callbacks, state) {
         super("Switches", callbacks, false, [
             {addr: "2", rw: "r", desc: "Switches"}
         ], {x: opts.n >= 10 ? 2 : 1, y: 1})
-        this.state = {switches: 0}
+        this.state = state ?? {switches: 0}
         this.nsw = 4
         if (opts.n) {
             this.nsw = opts.n
@@ -91,7 +91,7 @@ class SwitchMod extends SimMod {
         }
     }]
     
-    updateUI() {
+    updateUI(force) {
         // do nothing
     }
 
@@ -106,7 +106,13 @@ class SwitchMod extends SimMod {
                     } else {
                         this.state.switches &= ~(1 << i)
                     }
-                }}}),
+                }},
+                    after: e => {
+                        if(this.state.switches & (1 << i)) {
+                            e.checked = true;
+                        }
+                    }
+                }),
             )
         }
         return g("div", {klass: "swCont"}, this.sws)
@@ -114,12 +120,12 @@ class SwitchMod extends SimMod {
 }
 
 class StackMod extends SimMod {
-    static name = "Stack"
+    static title = "Stack"
     static opts = [
         {op: "size", type: "number", val: 32, min: 1, max: 128, desc: "Size"}
     ]
 
-    constructor(opts, callbacks) {
+    constructor(opts, callbacks, state) {
         super("Stack", callbacks, true, [
             {addr: "3", rw: "rw", desc: "Push/Pop"},
             {addr: "4", rw: "r", desc: "Length"}
@@ -127,7 +133,7 @@ class StackMod extends SimMod {
             {x: 1, y: Math.ceil(opts.size / 2 * 18 / 100) + 1}
         )
         this.size = opts.size
-        this.state = {stack: []}
+        this.state = state ?? {stack: []}
         this.updateReq = false
         this.el.modCont.appendChild(this.#genUI())
     }
@@ -164,8 +170,8 @@ class StackMod extends SimMod {
         }
     ]
 
-    updateUI() {
-        if (!this.updateReq) {
+    updateUI(force) {
+        if (!this.updateReq && !force) {
             return
         }
         const stack = this.state.stack
@@ -205,17 +211,17 @@ class StackMod extends SimMod {
 }
 
 class MemMapMod extends SimMod {
-    static name = "MemMap"
+    static title = "MemMap"
     static opts = [
         {op: "size", type: "number", val: 8, min: 1, max: 128, desc: "Size"}
     ]
 
-    constructor(opts, callbacks) {
+    constructor(opts, callbacks, state) {
         super("MemMap", callbacks, false, [
             {addr: `8-${7 + opts.size}`, rw: "rw", desc: "Data"}
         ], {x: 1, y: Math.ceil(opts.size / 2 * 18 / 100) + 1})
         this.size = opts.size
-        this.state = {data: Array(this.size).fill(0)}
+        this.state = state ?? {data: Array(this.size).fill(0)}
         this.el.modCont.appendChild(this.#genUI())
     }
 
@@ -234,8 +240,8 @@ class MemMapMod extends SimMod {
         }
     }]
 
-    updateUI() {
-        if (!this.updateReq) {
+    updateUI(force) {
+        if (!this.updateReq && !force) {
             return
         }
         for (let i = 0; i < this.size; i++) {

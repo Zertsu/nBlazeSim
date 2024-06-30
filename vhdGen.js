@@ -110,5 +110,18 @@ class vhdGen {
         a.target = '_blank'
         a.download = filename
         a.click();
-      }     
+    }
+
+    static async getFile() {
+        const filepicker = document.createElement("input")
+        filepicker.setAttribute("type", "file")
+        filepicker.click()
+        return new Promise((resolve, reject) => {
+            filepicker.addEventListener("change", e => {
+                const reader = new FileReader()
+                reader.addEventListener('load', file => resolve(file.target.result))
+                reader.readAsText(e.target.files[0])
+            });
+        })
+    }
 }

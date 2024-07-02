@@ -31,7 +31,7 @@ class CompUI {
         sim.ZF = s.sim.ZF
         sim.CF = s.sim.CF
         sim.intEn = s.sim.intEn
-        sim.intRq = s.sim.intRq
+        sim.intrq = s.sim.intRq
 
         const mods = {}
         for (let i = 0; i < this.simUI.mods.length; i++) {
@@ -82,7 +82,7 @@ class CompUI {
                 ZF: sim.ZF,
                 CF: sim.CF,
                 intEn: sim.intEn,
-                intRq: sim.intRq
+                intRq: sim.intrq
             },
             mods: (() => {
                 const a = []

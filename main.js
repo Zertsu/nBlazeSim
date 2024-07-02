@@ -13,6 +13,12 @@ document.addEventListener("DOMContentLoaded", function(event){
     document.getElementById("loadBtn").addEventListener("click",async e => {
         loadMng(await vhdGen.getFile())
     })
+    document.getElementById("exampleSelect").addEventListener("change", async e => {
+        const response = await fetch("examples/" + e.target.value)
+        const data = await response.text()
+        loadMng(data)
+        e.target.value = "default"
+    })
     // compUI = new CompUI(mainCont, locSimUI)
     
     window.addEventListener("drop", dropHandler)

@@ -2,9 +2,10 @@
 
 
 class CompUI {
-    constructor(parentElement, simClass, genSim) {
+    constructor(parentElement, simClass, genSim, closeHandler) {
         this.parentElement = parentElement
         this.simClass = simClass
+        this.closeHandler = closeHandler
         this.parentElement.appendChild(this.mainEl = this.#genUI())
         if (genSim) {
             this.compile()
@@ -131,6 +132,7 @@ class CompUI {
             this.simUI.delete()
         }
         this.mainEl.remove()
+        this.closeHandler(this)
     }
 
     #bytecodeToStr(c) {

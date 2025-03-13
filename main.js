@@ -1,14 +1,15 @@
 "use strict";
 
-let compUI;
+const compUIList = [];
+const closeHandler = c => compUIList.splice(compUIList.indexOf(c), 1)
 
 document.addEventListener("DOMContentLoaded", function(event){
     const mainCont = document.getElementById("mainCont")
     document.getElementById("newCompBtn").addEventListener("click", e => {
-        compUI = new CompUI(mainCont, locSimUI)
+        compUIList.push(new CompUI(mainCont, locSimUI, false, closeHandler))
     })
     document.getElementById("connToHard").addEventListener("click", e => {
-        compUI = new CompUI(mainCont, serSimUI, true)
+        new CompUI(mainCont, serSimUI, true)
     })
     document.getElementById("loadBtn").addEventListener("click",async e => {
         loadMng(await vhdGen.getFile())
@@ -24,14 +25,37 @@ document.addEventListener("DOMContentLoaded", function(event){
     window.addEventListener("drop", dropHandler)
     window.addEventListener("dragover", e => {
         e.preventDefault();
-    });    
+    });
+
+    window.addEventListener("beforeunload", e => {
+        const states = JSON.parse(localStorage.getItem("procs")) ?? []
+        for (const cui of compUIList) {
+            states.push(cui.saveState())
+        }
+        localStorage.setItem("procs", JSON.stringify(states))
+    })
+
+    const prevState = localStorage.getItem("procs")
+    if (prevState !== null) {
+        loadMng(prevState)
+        localStorage.removeItem("procs")
+    }
 });
 
-function loadMng(txt) {
-    const dat = JSON.parse(txt)
-    if(dat?.nBlazeSimVer === 1) {
-        compUI = new CompUI(mainCont, locSimUI)
-        compUI.loadState(dat)
+function loadMng(toLoad) {
+    if (typeof toLoad === "string") {
+        toLoad = JSON.parse(toLoad)
+    }
+    if (Array.isArray(toLoad)) {
+        for (const el of toLoad) {
+            loadMng(el)
+        }
+        return
+    }
+    if(toLoad?.nBlazeSimVer === 1) {
+        const c = new CompUI(mainCont, locSimUI, false, closeHandler)
+        compUIList.push(c)
+        c.loadState(toLoad)
     }
 }
 

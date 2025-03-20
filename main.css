@@ -15,17 +15,17 @@ textarea {
     min-height: 95vh;
     margin: 5px;
     display: grid;
-    grid-template-columns: repeat(4, 65px);
+    grid-template-columns: 30px repeat(4, 57.5px);
     grid-template-rows: 22px;
     grid-template-areas:
-        "delBtn  compBtn expBtn  binBtn  simContainer"
-        "srcText srcText srcText srcText simContainer"
+        "delBtn  compBtn expBtn  saveBtn binBtn  simContainer"
+        "srcText srcText srcText srcText srcText simContainer"
 }
 .compCont.showBin {
-    grid-template-columns: repeat(4, 65px) 160px;
+    grid-template-columns: 30px repeat(4, 57.5px) 160px;
     grid-template-areas: 
-        "delBtn  compBtn expBtn  binBtn  .       simContainer"
-        "srcText srcText srcText srcText binText simContainer"
+        "delBtn  compBtn expBtn  saveBtn binBtn  .       simContainer"
+        "srcText srcText srcText srcText srcText binText simContainer"
 }
 
 .compBtn {

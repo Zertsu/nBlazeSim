@@ -2,7 +2,7 @@
 
 class locSimUI extends SimUI {
     mods = [LedMod, SwitchMod, StackMod, MemMapMod]
-    
+
     constructor(parentElement, prog) {
         super(parentElement, prog)
         this.sim = new locSim(prog.bytecode, this.#hanPortReq.bind(this))
@@ -131,8 +131,9 @@ class locSimUI extends SimUI {
         }
     }
 
-    addModule(mod, opts) {
-        const m = new mod(opts, this.#callbacks)
+    addModule(mod, opts, state) {
+        const m = new mod(opts, this.#callbacks, state)
+        m.opts = opts
         this.actMods.add(m)
         this.#callbacks.addrUpd()
         this.sel.modsCont.appendChild(m.contEl)
@@ -146,7 +147,7 @@ class locSimUI extends SimUI {
             let arr = []
             for (let i = 0; i < this.mods.length; i++) {
                 const mod = this.mods[i];
-                arr.push(g("option", {value: i, innerText: mod.name}))
+                arr.push(g("option", {value: i, innerText: mod.title}))
             }
             return arr  
         }

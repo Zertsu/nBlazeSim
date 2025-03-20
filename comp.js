@@ -3,7 +3,7 @@
 class Comp {
 
     static defaultConstBase = 16
-    static #regRe = /^s([0-9a-fA-F])$/
+    static #regRe = /^s([0-9a-fA-F])$/i
     constructor(code) {
         this.src = code
         this.#translateCode()
@@ -13,6 +13,9 @@ class Comp {
         const o = str.split(",")
         for (let i = 0; i < o.length; i++) {
             o[i] = o[i].trim()
+        }
+        if (o.length == 1 && o[0] == "") {
+            return []
         }
         return o
     }
@@ -106,12 +109,12 @@ class Comp {
     #handleJmp(type, str, arglim) {
         let o = 0b100000 << 12
         const args = this.#tokenize(str)
-        if (arglim) {
+        if (arglim !== undefined) {
             if (args.length !== arglim) {
                 throw new CompError(`${args.length < arglim ? "Not enough" : "Too many"} arguments`)
             }
         } else {
-            if (args.length == 0 || args.length > 2) {
+            if (type !== "return" && args.length == 0 || args.length > 2) {
                 throw new CompError(`${args.length < 1 ? "Not enough" : "Too many"} arguments`)
             }
         }
@@ -121,7 +124,7 @@ class Comp {
             case "call":
                 break
             case "return":
-                if (args[0] == "") {
+                if (args.length == 0) {
                     // Inconsistent case
                     o |= 0b000101 << 12
                     return [o, null]
@@ -130,26 +133,34 @@ class Comp {
                 break
             case "reti":
                 o |= 0b001001 << 12
-                if(!args[0].match(/^(E|D)$/)) {
+                if(!args[0].match(/^(E|D|(?:ENABLE)|(?:DISABLE))$/i)) {
                     throw new CompError(`Invalid argument: ${args[0]}`)
                 }
-                o |= args[0] == "E" ? 1 : 0
+                o |= args[0][0].toUpperCase() == "E" ? 1 : 0
                 return [o, null]
             case "eni":
                 o |= 1
             case "disi":
                 o |= 0b001000 << 12
                 return [o, null]
+            case "enif":
+                o |= 1
+            case "disif":
+                if (args[0].toUpperCase() !== "INTERRUPT") {
+                    throw new CompError(`Invalid argument: ${args[0]}`)
+                }
+                o |= 0b001000 << 12
+                return [o, null]
             default:
                 break
         }
     
-        if (args.length == 1) {
+        if (args.length == 1 && type !== "return") {
             return [o, args[0]]
         }
     
         let cond = 0
-        switch (args[0]) {
+        switch (args[0].toUpperCase()) {
             case "Z":
                 cond = 0b100
                 break
@@ -180,6 +191,7 @@ class Comp {
         "XOR"        : str => this.#handleT(0b000110, str),
         "MULT8"      : str => this.#handleT(0b001100, str),
         "COMP"       : str => this.#handleT(0b011100, str),
+        "COMPARE"    : str => this.#handleT(0b011100, str),
         "ADD"        : str => this.#handleT(0b010000, str),
         "ADDCY"      : str => this.#handleT(0b010010, str),
         "SUB"        : str => this.#handleT(0b011000, str),
@@ -199,7 +211,9 @@ class Comp {
         "RETURN"     : str => this.#handleJmp("return", str),
         "RETURNI"    : str => this.#handleJmp("reti", str, 1),
         "ENINTERR"   : str => this.#handleJmp("eni", str, 0),
-        "DISINTERR"  : str => this.#handleJmp("disi", str, 0)
+        "ENABLE"     : str => this.#handleJmp("enif", str, 0),
+        "DISINTERR"  : str => this.#handleJmp("disi", str, 0),
+        "DISABLE"    : str => this.#handleJmp("disif", str, 0)
     }
 
     #dirs = {

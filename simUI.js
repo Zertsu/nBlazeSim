@@ -193,7 +193,10 @@ class SimUI {
                 g("input", {type: "button", value: "Interrupt", klass: "intBtn" , event: this.trigInt, after: (e) => el.btn.inter = e}),
                 g("input", {type: "button", value: "Step"     , klass: "stepBtn", event: this.step   , after: (e) => el.btn.step = e }),
                 g("input", {type: "button", value: "Run"      , klass: "runBtn" , event: this.run    , after: (e) => el.btn.run = e  }),
-                g("input", {type: "number", value: this.runPeriod, klass: "freqIn", event: {change: e => this.setRunFreq(parseFloat(e.target.value))}}),
+                g("input", {type: "number", value: this.runPeriod, klass: "freqIn", 
+                    event: {change: e => this.setRunFreq(parseFloat(e.target.value))},
+                    after: e => {el.freqIn = e}
+                }),
             ]),
 
             g("div", {klass: ["pmemOuter", "tOuter"]}, [

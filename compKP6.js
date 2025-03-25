@@ -216,7 +216,7 @@ class CompKP6 {
             throw new CompError(`${args.length < 1 ? "Not enough" : "Too many"} arguments`)
         }
         args.push('s8')
-        return [this.#syorkk(args) | (0b010100 << 12), 0]
+        return [this.#syorkk(args) | (0b010100 << 12), null]
         
     }
 
@@ -392,7 +392,7 @@ class CompKP6 {
         0b011101: "COMP sX, kk",
         0b011110: "COMPCY sX, sY",
         0b011111: "COMPCY sX, kk",
-        0b010100: "SR",
+        0b010100: "SR", // and HWBUILD
         0b110111: "REGBANK RB",
         0b001001: "INPUT sX, PP",
         0b001000: "INPUT sX, (sY)",
@@ -423,7 +423,6 @@ class CompKP6 {
         0b111101: "RETURN NC",
         0b101001: "RETURNI",
         0b100001: "L&RETURN sX, kk",
-        0b010100: "HWBUILD sX"
     }
 
     bytecode2str(code) {
@@ -438,6 +437,10 @@ class CompKP6 {
         const label = this.lineLabels[addr]
         switch (txt) {
             case "SR":
+                if ((code & 0xFF) === 0x80) {
+                    txt = "HWBUILD sX"
+                    break
+                }
                 const c = aluext & 0b111
                 if (aluext & 0b1000) {
                     // SRR

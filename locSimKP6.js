@@ -92,6 +92,9 @@ class locSimKP6 {
             }
         }
         const hanSR = (val, code) => {
+            if ((inst & 0xFF) === 0x80) {
+                return s.hwbuild
+            }
             const msb = 1 << 15
             const c = code & 0b111
             var oVal = val
@@ -187,7 +190,7 @@ class locSimKP6 {
             
 
             // Shift and rotate
-            case 0b010100: s.reg[sX] = hanSR(s.reg[sX], aluext) ; break // SR
+            case 0b010100: s.reg[sX] = hanSR(s.reg[sX], aluext) ; break // SR and HWBUILD
 
             // Register bank selection
             case 0b110111: hanRegB(intEn === 1) ; break // REGBANK
@@ -231,8 +234,6 @@ class locSimKP6 {
             case 0b111101: s.PC = s.CF ? s.PC : hanRet()    ; break // RETURN NC
             case 0b100001: s.reg[sX] = kk; s.PC = hanRet()  ; break // LOAD&RETURN sX, kk
 
-            // Version Control
-            case 0b010100: s.reg[sX] = s.hwbuild // HWBUILD sX
             default: break;
         }
     }

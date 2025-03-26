@@ -59,6 +59,34 @@ class locSimKP6 {
         }
     }
     
+    loadState(s) {
+        this.reg = new Uint8Array(s.reg)
+        this.breg = new Uint8Array(s.breg)
+        this.actRB = s.actRB
+        this.dmem = new Uint8Array(s.dmem)
+        this.stack = [...s.stack]
+        this.PC = s.PC
+        this.ZF = s.ZF
+        this.CF = s.CF
+        this.intEn = s.intEn
+        this.intrq = s.intRq
+    }
+
+    saveState() {
+        return {
+            reg: Array.from(this.reg),
+            breg: Array.from(this.breg),
+            actRB: this.actRB,
+            dmem: Array.from(this.dmem),
+            stack: this.stack,
+            PC: this.PC,
+            ZF: this.ZF,
+            CF: this.CF,
+            intEn: this.intEn,
+            intRq: this.intrq
+        }
+    }
+
     trigInt() {
         this.intrq = true
     }
@@ -218,7 +246,7 @@ class locSimKP6 {
             case 0b110110: s.PC = s.ZF ? s.PC : addr    ; break // JUMP NZ, addr
             case 0b111010: s.PC = s.CF ? addr : s.PC    ; break // JUMP C, addr
             case 0b111110: s.PC = s.CF ? s.PC : addr    ; break // JUMP NC, addr
-            case 0b100110: s.PC = (s.reg[sX] | 0b1111) << 8 | s.reg[sY] ; break // JUMP@ (sX, sY)
+            case 0b100110: s.PC = ((s.reg[sX] | 0b1111) << 8) | s.reg[sY] ; break // JUMP@ (sX, sY)
 
             // Subroutines
             case 0b100000: s.PC = hanCall(addr)         ; break // CALL addr
@@ -226,7 +254,7 @@ class locSimKP6 {
             case 0b110100: s.PC = s.ZF ? s.PC : hanCall(addr)   ; break // CALL NZ, addr
             case 0b111000: s.PC = s.CF ? hanCall(addr) : s.PC   ; break // CALL C, addr
             case 0b111100: s.PC = s.CF ? s.PC : hanCall(addr)   ; break // CALL NC, addr
-            case 0b100100: s.PC = hanCall((s.reg[sX] | 0b1111) << 8 | s.reg[sY])    ; break // CALL@ (sX, sY)
+            case 0b100100: s.PC = hanCall(((s.reg[sX] & 0b1111) << 8) | s.reg[sY])    ; break // CALL@ (sX, sY)
             case 0b100101: s.PC = hanRet()                  ; break // RETURN
             case 0b110001: s.PC = s.ZF ? hanRet() : s.PC    ; break // RETURN Z
             case 0b110101: s.PC = s.ZF ? s.PC : hanRet()    ; break // RETURN NZ

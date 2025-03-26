@@ -109,7 +109,7 @@ class SimUI {
         changeEl.select()
     }
 
-    genUI(modContents) {
+    genUI(modContents, scratchPadSize = 64) {
         const el = {btn: {}, dmem: [], pmem: [], reg: [], stack: []}
 
         const g = SimUI.htmlGen.bind(this)
@@ -206,12 +206,12 @@ class SimUI {
 
             g("div", {klass: ["dmemOuter", "tOuter"]}, [
                 g("div", {innerText: "Data Memory"}),
-                g("div", {klass: ["dmem", "tCont"]}, genArr(64, "", el.dmem, undefined, "dmem"))
+                g("div", {klass: ["dmem", "tCont"], style: `--cc: ${scratchPadSize}`}, genArr(scratchPadSize, "", el.dmem, undefined, "dmem"))
             ]),
 
             g("div", {klass: ["regOuter", "tOuter"]}, [
                 g("div", {innerText: "Registers"}),
-                g("div", {klass: ["reg", "tCont"]}, [
+                g("div", {klass: ["reg", "tCont"], style: "--cc: 64"}, [
                     ...genArr(16, "s", el.reg, 16, "reg"),
                     g("div", {klass: "tHeader", innerText: "Other registers"}),
                     ...genSpec()
@@ -219,7 +219,7 @@ class SimUI {
                 ])
             ]),
 
-            g("div", {klass: ["stackOuter", "tOuter"]}, [
+            g("div", {klass: ["stackOuter", "tOuter"], style: "--cc: 64"}, [
                 g("div", {innerText: "Stack"}),
                 g("div", {klass: ["stack", "tCont"]}, genArr(32, "", el.stack, undefined, "stack"))
             ]),

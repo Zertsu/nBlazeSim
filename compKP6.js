@@ -1,6 +1,7 @@
 "use strict";
 
 class CompKP6 {
+    static archName = "kp6"
 
     static defaultConstBase = 16
     static #regRe = /^s([0-9a-fA-F])$/i
@@ -22,6 +23,15 @@ class CompKP6 {
     
     #parseConst(str, limit) {
         limit ??= 255
+        if (str.match(/("|').\1/)) {
+            const num = str.charCodeAt(1)
+            if (num > 255) {
+                throw new CompError(`Character ${str} not valid ascii`)
+            } else if (num > limit) {
+                throw new CompError(`Character ${str} too large`)
+            }
+            return num
+        }
         const bases = {
             "0b": 2,
             "0o": 8,
@@ -134,6 +144,9 @@ class CompKP6 {
                 }
                 o |= 0b000001 << 12
                 break
+            case "l&r":
+                o |= (0b100001 << 12) | this.#opCodes["LOAD"](str)[0]
+                return [o, null]
             case "reti":
                 o |= 0b001001 << 12
                 if(!args[0].match(/^(E|D|(?:ENABLE)|(?:DISABLE))$/i)) {
@@ -422,7 +435,7 @@ class CompKP6 {
         0b111001: "RETURN C",
         0b111101: "RETURN NC",
         0b101001: "RETURNI",
-        0b100001: "L&RETURN sX, kk",
+        0b100001: "LD&RET sX, kk",
     }
 
     bytecode2str(code) {

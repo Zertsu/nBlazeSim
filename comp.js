@@ -1,6 +1,7 @@
 "use strict";
 
 class Comp {
+    static archName = "nblaze"
 
     static defaultConstBase = 16
     static #regRe = /^s([0-9a-fA-F])$/i
@@ -22,6 +23,15 @@ class Comp {
     
     #parseConst(str, limit) {
         limit ??= 255
+        if (str.match(/("|').\1/)) {
+            const num = str.charCodeAt(1)
+            if (num > 255) {
+                throw new CompError(`Character ${str} not valid ascii`)
+            } else if (num > limit) {
+                throw new CompError(`Character ${str} too large`)
+            }
+            return num
+        }
         const bases = {
             "0b": 2,
             "0o": 8,

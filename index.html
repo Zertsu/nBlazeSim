@@ -8,17 +8,25 @@
     <link rel='stylesheet' type='text/css' media='screen' href='main.css'>
     <link rel='stylesheet' type='text/css' media='screen' href='locSimMods.css'>
     <script src='main.js' defer></script>
+    <script src="saveConv.js"></script>
     <script src="comp.js"></script>
+    <script src="compKP6.js"></script>
     <script src="compUI.js"></script>
     <script src="locSim.js"></script>
+    <script src="locSimKP6.js"></script>
     <script src="vhdGen.js"></script>
     <script src="simUI.js"></script>
     <script src="locSimUI.js"></script>
+    <script src="locSimUIKP6.js"></script>
     <script src="locSimMods.js"></script>
     <script src="serSimUI.js"></script>
 </head>
 <body>
     <div id="mainCont"></div>
+    <select id="archSelect">
+        <option value="nblaze" selected>nblaze</option>
+        <option value="kp6">kcpsm6</option>
+    </select>
     <input type="button" value="New compiler" id="newCompBtn">
     <input type="button" value="Load" id="loadBtn">
     <select name="Example" id="exampleSelect">
@@ -29,7 +37,22 @@
         <option value="mods2.json">Mods 2</option>
         <option value="mods3.json">Mods 3</option>
         <option value="mods4.json">Mods 4</option>
+        <option value="scancode2ascii.json">scancode2ascii</option>
     </select>
     <input type="button" value="New hardware connection" id="connToHard">
+    <br>
+    <div id="nblazeoptions" class="archoptions active"></div>
+    <div id="kp6options" class="archoptions">
+        <label for="kp6_scratch_pad_memory_size">Scratch Pad size</label>
+        <select id="kp6_scratch_pad_memory_size" name="kp6_scratch_pad_memory_size" data-parse="int">
+            <option value="64" selected>64</option>
+            <option value="128">128</option>
+            <option value="256">256</option>
+        </select>
+        <label for="kp6_interrupt_vector">Interrupt Vector</label>
+        <input type="number" id="kp6_interrupt_vector" name="kp6_interrupt_vector" min="0" max="4095" value="1023" data-parse="int">
+        <label for="kp6_hwbuild">Hardware build</label>
+        <input type="number" id="kp6_hwbuild" name="kp6_hwbuild" min="0" max="255" value="0" data-parse="int">
+    </div>
 </body>
 </html>

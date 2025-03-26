@@ -2,6 +2,14 @@ body {
     margin: 0;
 }
 
+.archoptions {
+    display: none;
+}
+
+.archoptions.active {
+    display: block;
+}
+
 textarea {
     resize: none;
 }
@@ -57,7 +65,7 @@ textarea {
 .simCont {
     height: 100%;
     display: grid;
-    grid-template-columns: 280px 130px 180px 85px 1fr;
+    grid-template-columns: 300px 130px 180px 85px 1fr;
     grid-template-rows: min-content auto;
     grid-template-areas:
         "contr contr contr contr contr"
@@ -119,7 +127,7 @@ textarea {
     grid-auto-flow: column;
 }
 
-.active {
+div.pmem .active {
     background-color: lightcoral;
 }
 
@@ -158,7 +166,8 @@ textarea {
 }
 
 .dmem.tCont {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(calc(var(--cc) / 32), 50%);
+    overflow-x: auto;
 }
 
 .stack > div {

@@ -53,6 +53,30 @@ class locSim {
         }
     }
     
+    loadState(s) {
+        this.reg = new Uint16Array(s.reg)
+        this.dmem = new Uint16Array(s.dmem)
+        this.stack = [...s.stack]
+        this.PC = s.PC
+        this.ZF = s.ZF
+        this.CF = s.CF
+        this.intEn = s.intEn
+        this.intrq = s.intRq
+    }
+
+    saveState() {
+        return {
+            reg: Array.from(this.reg),
+            dmem: Array.from(this.dmem),
+            stack: this.stack,
+            PC: this.PC,
+            ZF: this.ZF,
+            CF: this.CF,
+            intEn: this.intEn,
+            intRq: this.intrq
+        }
+    }
+    
     trigInt() {
         this.intrq = true
     }

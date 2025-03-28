@@ -215,7 +215,7 @@ class locSimUIKP6 extends SimUI {
             this?.sel?.modsCont === undefined ?
                 g("div", {klass: "modsCont", after: (e) => sel.modsCont = e})
             :   g(this.sel.modsCont, {after: (e) => sel.modsCont = e})
-        ], this.instOptions.scratch_pad_memory_size)
+        ], this.instOptions.scratch_pad_memory_size, true)
         this.sel = sel
         genSelModOpts()
     }

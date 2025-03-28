@@ -109,8 +109,11 @@ class SimUI {
         changeEl.select()
     }
 
-    genUI(modContents, scratchPadSize = 64) {
+    genUI(modContents, scratchPadSize = 64, banked = false) {
         const el = {btn: {}, dmem: [], pmem: [], reg: [], stack: []}
+        if (banked) {
+            el.breg = []
+        }
 
         const g = SimUI.htmlGen.bind(this)
 
@@ -156,10 +159,10 @@ class SimUI {
             for (let i = 0; i < len; i++) {
                 const iel = g("div")
                 arr.push(g(
-                    "div", {}, [
+                    "div", {}, prefix !== null ? [
                         g("div", {innerText: prefix + i.toString(base).toUpperCase()}),
                         iel
-                    ]
+                    ] : [iel]
                 ))
                 if(changeName) {
                     iel.addEventListener("click", (ce) => {
@@ -173,7 +176,7 @@ class SimUI {
 
         const genSpec = () => {
             const arr = []
-            for (const e of ["PC", "ZF", "CF", "intEn", "intRq"]) {
+            for (const e of ["PC", "ZF", "CF", "intEn", "intRq", "actRB"]) {
                 const iel = g("div")
                 arr.push(g("div", {}, [
                     g("div", {innerText: e}),
@@ -211,8 +214,9 @@ class SimUI {
 
             g("div", {klass: ["regOuter", "tOuter"]}, [
                 g("div", {innerText: "Registers"}),
-                g("div", {klass: ["reg", "tCont"], style: "--cc: 64"}, [
+                g("div", {klass: banked ? ["regbanked", "tCont"] : ["reg", "tCont"], style: "--cc: 64"}, [
                     ...genArr(16, "s", el.reg, 16, "reg"),
+                    ...(banked ? genArr(16, null, el.breg, 16, "breg") : []),
                     g("div", {klass: "tHeader", innerText: "Other registers"}),
                     ...genSpec()
 
@@ -242,6 +246,12 @@ class SimUI {
         
         for (let i = 0; i < s.reg.length; i++) {
             el.reg[i].innerText = s.reg[i]
+        }
+        if (el.breg) {
+            for (let i = 0; i < s.breg.length; i++) {
+                el.breg[i].innerText = s.breg[i]
+            }
+            el.actRB.innerText = s.actRB ? "B" : "A"
         }
         for (let i = 0; i < s.stack.length; i++) {
             const stel = el.stack[i]

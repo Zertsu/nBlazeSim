@@ -46,6 +46,13 @@ class locSimKP6 {
             v = v.toLowerCase()
             return ["true", "1"].includes(v)
         }
+        const rb = (v) => {
+            v = v.toLowerCase()
+            if (this.actRB !== (v === 'b')) {
+                [this.reg, this.breg] = [this.breg, this.reg]
+                this.actRB = !this.actRB
+            }
+        }
         switch (tar) {
             case "PC":    this.PC = parseInt(v)         ; break
             case "ZF":    this.ZF = b(v)                ; break
@@ -53,6 +60,8 @@ class locSimKP6 {
             case "intEn": this.intEn = b(v)             ; break
             case "intRq": this.intrq = b(v)             ; break
             case "reg":   this.reg[ind] = parseInt(v)   ; break
+            case "breg":  this.breg[ind] = parseInt(v)  ; break
+            case "actRB": rb(v)                         ; break
             case "dmem":  this.dmem[ind] = parseInt(v)  ; break
             case "stack": this.stack[ind] = parseInt(v) ; break
             default: break;

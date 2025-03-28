@@ -127,6 +127,22 @@ textarea {
     grid-auto-flow: column;
 }
 
+.regbanked {
+    display: grid;
+    grid-template-columns: 3fr 2fr;
+    grid-auto-flow: column;
+}
+
+.regbanked div:nth-child(n+17):nth-child(-n+32) {
+    grid-column-start: 2;
+}
+
+.regbanked .tHeader,
+.regbanked .tHeader ~ div {
+    grid-column: span 2;
+}
+
+
 div.pmem .active {
     background-color: lightcoral;
 }

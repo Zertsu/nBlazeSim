@@ -221,9 +221,9 @@ class Comp {
         "RETURN"     : str => this.#handleJmp("return", str),
         "RETURNI"    : str => this.#handleJmp("reti", str, 1),
         "ENINTERR"   : str => this.#handleJmp("eni", str, 0),
-        "ENABLE"     : str => this.#handleJmp("enif", str, 0),
+        "ENABLE"     : str => this.#handleJmp("enif", str, 1),
         "DISINTERR"  : str => this.#handleJmp("disi", str, 0),
-        "DISABLE"    : str => this.#handleJmp("disif", str, 0)
+        "DISABLE"    : str => this.#handleJmp("disif", str, 1)
     }
 
     #dirs = {

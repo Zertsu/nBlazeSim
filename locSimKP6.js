@@ -13,7 +13,7 @@ class locSimKP6 {
         this.PC = 0
         this.ZF = false
         this.CF = false
-        this.intEn = true
+        this.intEn = false
         this.intrq = false
         this.hwbuild = options?.hwbuild ?? 0
         this.interrupt_vector = options?.interrupt_vector ?? 0x3FF
@@ -29,7 +29,7 @@ class locSimKP6 {
         this.ZF = false
         this.CF = false
         this.pout = []
-        this.intEn = true
+        this.intEn = false
         this.intrq = false
     }
 
@@ -130,6 +130,8 @@ class locSimKP6 {
         }
         const hanSR = (val, code) => {
             if ((inst & 0xFF) === 0x80) {
+                s.CF = true
+                s.ZF = s.hwbuild === 0
                 return s.hwbuild
             }
             const msb = 1 << 15
@@ -183,7 +185,7 @@ class locSimKP6 {
             }
         }
         const getPar = (d, c) => {
-            p = 0
+            let p = 0
             while (d) {
                 p ^= d & 1
                 d >>= 1

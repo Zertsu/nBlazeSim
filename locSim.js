@@ -11,7 +11,7 @@ class locSim {
         this.PC = 0
         this.ZF = false
         this.CF = false
-        this.intEn = true
+        this.intEn = false
         this.intrq = false
     }
 
@@ -23,7 +23,7 @@ class locSim {
         this.ZF = false
         this.CF = false
         this.pout = []
-        this.intEn = true
+        this.intEn = false
         this.intrq = false
     }
 

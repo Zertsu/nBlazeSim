@@ -229,7 +229,11 @@ class Comp {
     #dirs = {
         "NAMEREG" : str => {
             const args = this.#tokenize(str)
-            this.regNames[args[1]] = parseInt(args[0].substring(1))
+            const reg = args[0].substring(1)
+            if (!reg.match(/[0-9a-fA-F]/)) {
+                throw new CompError(`Unknown register "${args[0]}"`);
+            }
+            this.regNames[args[1]] = parseInt(reg, 16)
         },
         "ADDRESS" : str => {
             this.bytecodeIndex = this.#parseConst(str.trim(), 4095)

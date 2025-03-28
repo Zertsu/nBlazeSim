@@ -128,6 +128,11 @@ class CompUI {
     }
 
     async export() {
+        if (this.srcEl.value !== this.lsrc) {
+            if(!window.confirm("Source have been changed since last compilation. Proceed?")) {
+                return
+            }
+        }
         let vhd = await vhdGen.genVHD(this.prog)
         vhdGen.downlaodFile("prog_memory.vhd", vhd)
     }

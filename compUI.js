@@ -2,12 +2,13 @@
 
 
 class CompUI {
-    constructor(parentElement, compClass, simClass, options, genSim, closeHandler) {
+    constructor(parentElement, compClass, simClass, options, genSim, closeHandler, actnBlazeSimVer) {
         this.parentElement = parentElement
         this.simClass = simClass
         this.compClass = compClass
         this.instOptions = options
         this.closeHandler = closeHandler
+        this.actnBlazeSimVer = actnBlazeSimVer
         this.parentElement.appendChild(this.mainEl = this.#genUI())
         if (genSim) {
             this.compile()
@@ -71,7 +72,7 @@ class CompUI {
         const sim = this?.simUI?.sim
         if (sim) {
             return {
-                nBlazeSimVer: 2,
+                nBlazeSimVer: this.actnBlazeSimVer,
                 arch: this.compClass.archName,
                 archopts: this.instOptions,
                 src: this.srcEl.value,
@@ -97,7 +98,7 @@ class CompUI {
             }
         } else {
             return {
-                nBlazeSimVer: 2,
+                nBlazeSimVer: this.actnBlazeSimVer,
                 arch: this.compClass.archName,
                 archopts: this.instOptions,
                 src: this.srcEl.value,

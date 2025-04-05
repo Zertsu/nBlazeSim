@@ -1,5 +1,6 @@
 "use strict";
 
+const actnBlazeSimVer = 3
 const compUIList = [];
 const closeHandler = c => compUIList.splice(compUIList.indexOf(c), 1)
 
@@ -25,10 +26,10 @@ document.addEventListener("DOMContentLoaded", function(event){
         })
         switch (arch) {
             case "nblaze":
-                compUIList.push(new CompUI(mainCont, Comp, locSimUI, options, false, closeHandler))
+                compUIList.push(new CompUI(mainCont, Comp, locSimUI, options, false, closeHandler, actnBlazeSimVer))
                 break;
             case "kp6":
-                compUIList.push(new CompUI(mainCont, CompKP6, locSimUIKP6, options, false, closeHandler))
+                compUIList.push(new CompUI(mainCont, CompKP6, locSimUIKP6, options, false, closeHandler, actnBlazeSimVer))
             default:
                 break;
         }
@@ -80,16 +81,16 @@ function loadMng(toLoad) {
     if (toLoad?.nBlazeSimVer === undefined) {
         return
     }
-    if(toLoad?.nBlazeSimVer === 2) {
+    if(toLoad?.nBlazeSimVer === actnBlazeSimVer) {
         const arch = {
             nblaze: [Comp, locSimUI],
             kp6: [CompKP6, locSimUIKP6]
         }[toLoad.arch]
-            const c = new CompUI(mainCont, arch[0], arch[1], toLoad.archopts, false, closeHandler)
+            const c = new CompUI(mainCont, arch[0], arch[1], toLoad.archopts, false, closeHandler, actnBlazeSimVer)
             compUIList.push(c)
             c.loadState(toLoad)
     } else {
-        loadMng(saveConverter.update(toLoad, 2))
+        loadMng(saveConverter.update(toLoad, actnBlazeSimVer))
     }
 }
 

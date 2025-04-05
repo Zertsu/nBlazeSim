@@ -63,7 +63,22 @@ class locSimKP6 {
             case "breg":  this.breg[ind] = parseInt(v)  ; break
             case "actRB": rb(v)                         ; break
             case "dmem":  this.dmem[ind] = parseInt(v)  ; break
-            case "stack": this.stack[ind] = parseInt(v) ; break
+            case "stack": 
+                const stspl = v.split(" ")
+                if (stspl.length === 1) {
+                    this.stack[ind][0] = parseInt(v)
+                    this.stack[ind][4] = false
+                    break
+                } else {
+                    this.stack[ind][0] = parseInt(stspl[0])
+                    if(stspl[1].length > 0) {
+                        this.stack[ind][1] = stspl[1][0] === '1'
+                        this.stack[ind][2] = stspl[1][1] === '1'
+                        this.stack[ind][3] = stspl[1][2].toLowerCase() === 'b'
+                    }
+                    this.stack[ind][4] = true
+                    break
+                }
             default: break;
         }
     }
@@ -104,8 +119,9 @@ class locSimKP6 {
         const s = this
         
         if (s.intEn && s.intrq) {
-            this.intrq = false
-            s.stack.push(s.PC)
+            s.intrq = false
+            s.intEn = false
+            s.stack.push([s.PC, s.ZF, s.CF, s.actRB, true])
             s.PC = s.interrupt_vector
             return
         }
@@ -169,11 +185,26 @@ class locSimKP6 {
             return oVal
         }
         const hanCall = (addr) => {
-            s.stack.push(s.PC)
+            if(s.stack.length === 32) {
+                s.reset()
+                return 0
+            }
+            s.stack.push([s.PC - 1, s.ZF, s.CF, s.actRB, false])
             return addr
         }
-        const hanRet = () => {
-            return s.stack.pop()
+        const hanRet = (int = false) => {
+            if(s.stack.length === 0) {
+                s.reset()
+                return 0
+            }
+            const v = s.stack.pop()
+            if(int) {
+                s.ZF = v[1]
+                s.CF = v[2]
+                s.actRB = v[3]
+                return v[0]
+            }
+            return v[0] + 1
         }
         const hanInt = () => {
             s.intEn = intEn == 1
@@ -248,7 +279,7 @@ class locSimKP6 {
             case 0b101110: s.dmem[s.reg[sY]] = s.reg[sX]        ; break // STORE sX, (sY)
     
             // Interrupt Handling
-            case 0b101001: hanInt(); s.PC = hanRet()        ; break // RETURNI
+            case 0b101001: hanInt(); s.PC = hanRet(true)    ; break // RETURNI
             case 0b101000: hanInt()                         ; break // ENINTERR / DISINTERR
 
             // Jump

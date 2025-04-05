@@ -8,6 +8,15 @@ class saveConverter {
             e.arch = "nblaze"
             e.archopts = {}
             return e
+        }),
+        2: (e => {
+            e.nBlazeSimVer = 3
+            if(e.arch == "kp6") {
+                e.sim.stack = e.sim.stack.map(el => {
+                    return [el - 1, false, false, false, false]
+                })
+            }
+            return e
         })
     }
 

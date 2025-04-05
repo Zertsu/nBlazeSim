@@ -107,6 +107,10 @@ class SimUI {
         }})
         el.replaceWith(changeEl);
         changeEl.select()
+        const vsplt = changeEl.value.split(" ")
+        if(vsplt.length > 1) {
+            changeEl.setSelectionRange(0, vsplt[0].length)
+        }
     }
 
     genUI(modContents, scratchPadSize = 64, banked = false) {
@@ -225,7 +229,7 @@ class SimUI {
 
             g("div", {klass: ["stackOuter", "tOuter"], style: "--cc: 64"}, [
                 g("div", {innerText: "Stack"}),
-                g("div", {klass: ["stack", "tCont"]}, genArr(32, "", el.stack, undefined, "stack"))
+                g("div", {klass: ["stack", "tCont"]}, genArr(32, null, el.stack, undefined, "stack"))
             ]),
     
             g("div", {klass: "simModOuter"}, modContents)
@@ -255,7 +259,15 @@ class SimUI {
         }
         for (let i = 0; i < s.stack.length; i++) {
             const stel = el.stack[i]
-            stel.innerText = s.stack[i]
+            if (Array.isArray(s.stack[i])) {
+                if (s.stack[i][4]) {
+                    stel.innerText = `${s.stack[i][0]} ${s.stack[i][1] ? '1' : '0'}${s.stack[i][2] ? '1' : '0'}${s.stack[i][3] ? 'B' : 'A'}`   
+                } else {
+                    stel.innerText = s.stack[i][0]
+                }
+            } else {
+                stel.innerText = s.stack[i]
+            }
             stel.parentElement.style.visibility = "visible"
         }
         for (let i = s.stack.length; i < 32; i++) {

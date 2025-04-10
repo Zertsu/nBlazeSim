@@ -201,7 +201,7 @@ class locSimKP6 {
             if(int) {
                 s.ZF = v[1]
                 s.CF = v[2]
-                s.actRB = v[3]
+                hanRegB(v[3])
                 return v[0]
             }
             return v[0] + 1
@@ -221,7 +221,7 @@ class locSimKP6 {
                 p ^= d & 1
                 d >>= 1
             }
-            return c ? p === 1 : p !== 1
+            return c ? p !== 1 : p === 1
         }
     
         switch (instCode) {

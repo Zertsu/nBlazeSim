@@ -1,7 +1,7 @@
 "use strict";
 
 class locSimUIKP6 extends SimUI {
-    mods = [LedMod, SwitchMod, StackMod, MemMapMod]
+    mods = [LedMod, SwitchMod, StackMod, MemMapMod, ParLCDMod]
 
     constructor(parentElement, prog, options) {
         super(parentElement, prog)
@@ -10,6 +10,7 @@ class locSimUIKP6 extends SimUI {
         this.runPeriod = 100
         this.lastExec = undefined
         this.actMods = new Set()
+        this.updsMods = new Set()
         this.ports = {r: {}, w: {}}
         this.genUI()
         this.updateUI()
@@ -62,6 +63,7 @@ class locSimUIKP6 extends SimUI {
             const af = (t) => {
                 if (!this.running) {
                     this.lastExec = undefined
+                    this.#callbacks.reqUpdate(undefined, true)
                     return
                 }
                 if (this.lastExec === undefined) {
@@ -86,6 +88,7 @@ class locSimUIKP6 extends SimUI {
     #callbacks = {
         delete: (e) => {
             this.actMods.delete(e)
+            this.updsMods.delete(e)
             this.#callbacks.addrUpd()
         },
         addrUpd: (e) => {
@@ -120,7 +123,29 @@ class locSimUIKP6 extends SimUI {
                 }
             }
         },
-        trigInter: e => this.sim.trigInt()
+        trigInter: e => this.sim.trigInt(),
+        reqUpdate: (e, v) => {
+            if (v) {
+                if (e) {
+                    this.updsMods.add(e)
+                }
+                if (this.running === false && this.updsMods.size > 0) {
+                    const af = t => {
+                        console.log("buu")
+                        if (this.updsMods.size === 0 || this.running) {
+                            return
+                        }
+                        for (const m of this.updsMods) {
+                            m.updateUI()
+                        }
+                        requestAnimationFrame(af)
+                    }
+                    requestAnimationFrame(af)
+                }
+            } else {
+                this.updsMods.delete(e)
+            }
+        }
     }
 
     #hanPortReq(rw, portID, data) {

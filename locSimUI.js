@@ -1,7 +1,7 @@
 "use strict";
 
 class locSimUI extends SimUI {
-    mods = [LedMod, SwitchMod, StackMod, MemMapMod]
+    mods = [LedMod, SwitchMod, StackMod, MemMapMod, ParLCDMod]
 
     constructor(parentElement, prog) {
         super(parentElement, prog)
@@ -9,6 +9,7 @@ class locSimUI extends SimUI {
         this.runPeriod = 100
         this.lastExec = undefined
         this.actMods = new Set()
+        this.updsMods = new Set()
         this.ports = {r: {}, w: {}}
         this.genUI()
         this.updateUI()
@@ -61,6 +62,7 @@ class locSimUI extends SimUI {
             const af = (t) => {
                 if (!this.running) {
                     this.lastExec = undefined
+                    this.#callbacks.reqUpdate(undefined, true)
                     return
                 }
                 if (this.lastExec === undefined) {
@@ -85,6 +87,7 @@ class locSimUI extends SimUI {
     #callbacks = {
         delete: (e) => {
             this.actMods.delete(e)
+            this.updsMods.delete(e)
             this.#callbacks.addrUpd()
         },
         addrUpd: (e) => {
@@ -119,7 +122,29 @@ class locSimUI extends SimUI {
                 }
             }
         },
-        trigInter: e => this.sim.trigInt()
+        trigInter: e => this.sim.trigInt(),
+        reqUpdate: (e, v) => {
+            if (v) {
+                if (e) {
+                    this.updsMods.add(e)
+                }
+                if (this.running === false && this.updsMods.size > 0) {
+                    const af = t => {
+                        console.log("buu")
+                        if (this.updsMods.size === 0 || this.running) {
+                            return
+                        }
+                        for (const m of this.updsMods) {
+                            m.updateUI()
+                        }
+                        requestAnimationFrame(af)
+                    }
+                    requestAnimationFrame(af)
+                }
+            } else {
+                this.updsMods.delete(e)
+            }
+        }
     }
 
     #hanPortReq(rw, portID, data) {

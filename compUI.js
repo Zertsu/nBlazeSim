@@ -2,10 +2,13 @@
 
 
 class CompUI {
-    constructor(parentElement, simClass, genSim, closeHandler) {
+    constructor(parentElement, compClass, simClass, options, genSim, closeHandler, actnBlazeSimVer) {
         this.parentElement = parentElement
         this.simClass = simClass
+        this.compClass = compClass
+        this.instOptions = options
         this.closeHandler = closeHandler
+        this.actnBlazeSimVer = actnBlazeSimVer
         this.parentElement.appendChild(this.mainEl = this.#genUI())
         if (genSim) {
             this.compile()
@@ -13,8 +16,17 @@ class CompUI {
     }
 
     loadState(s) {
-        this.srcEl.value = s.src
-        this.compile()
+        if(s.lsrc === true) {
+            this.srcEl.value = s.src
+            this.compile()
+        } else if (s.lsrc === false) {
+            this.srcEl.value = s.src
+            return
+        } else {
+            this.srcEl.value = s.lsrc
+            this.compile()
+            this.srcEl.value = s.src
+        }
 
         this.simUI.el.freqIn.value = s.debug.timescale
         this.simUI.setRunFreq(s.debug.timescale)
@@ -25,14 +37,7 @@ class CompUI {
             this.simUI.breakPoints.add(bp)
         }
         const sim = this.simUI.sim
-        sim.reg = new Uint16Array(s.sim.reg)
-        sim.dmem = new Uint16Array(s.sim.dmem)
-        sim.stack = [...s.sim.stack]
-        sim.PC = s.sim.PC
-        sim.ZF = s.sim.ZF
-        sim.CF = s.sim.CF
-        sim.intEn = s.sim.intEn
-        sim.intrq = s.sim.intRq
+        sim.loadState(s.sim)
 
         const mods = {}
         for (let i = 0; i < this.simUI.mods.length; i++) {
@@ -64,47 +69,47 @@ class CompUI {
     }
 
     saveState() {
-        if (!this.simUI) {
-            this.compile()
-        }
-        const sim = this.simUI.sim
-        return {
-            nBlazeSimVer: 1,
-            src: this.srcEl.value,
-            debug: {
-                timescale: this.simUI.runPeriod,
-                brakepoints: Array.from(this.simUI.breakPoints)
-            },
-            sim: {
-                reg: Array.from(sim.reg),
-                dmem: Array.from(sim.dmem),
-                stack: sim.stack,
-                PC: sim.PC,
-                ZF: sim.ZF,
-                CF: sim.CF,
-                intEn: sim.intEn,
-                intRq: sim.intrq
-            },
-            mods: (() => {
-                const a = []
-                for (const m of this.simUI.actMods) {
-                    a.push({
-                        name: m.constructor.name,
-                        addr: m.addr.map(e => e.addr),
-                        opts: m.opts,
-                        state: m.state,
-                        enInt: m.enInt
-                    })
-                }
-                return a
-            })()
+        const sim = this?.simUI?.sim
+        if (sim) {
+            return {
+                nBlazeSimVer: this.actnBlazeSimVer,
+                arch: this.compClass.archName,
+                archopts: this.instOptions,
+                src: this.srcEl.value,
+                lsrc: this.srcEl.value === this.lsrc ? true : this.lsrc,
+                debug: {
+                    timescale: this.simUI.runPeriod,
+                    brakepoints: Array.from(this.simUI.breakPoints)
+                },
+                sim: sim.saveState(),
+                mods: (() => {
+                    const a = []
+                    for (const m of this.simUI.actMods) {
+                        a.push({
+                            name: m.constructor.name,
+                            addr: m.addr.map(e => e.addr),
+                            opts: m.opts,
+                            state: m.state,
+                            enInt: m.enInt
+                        })
+                    }
+                    return a
+                })()
+            }
+        } else {
+            return {
+                nBlazeSimVer: this.actnBlazeSimVer,
+                arch: this.compClass.archName,
+                archopts: this.instOptions,
+                src: this.srcEl.value,
+                lsrc: false,
+            }
         }
     }
-
     compile() {
         const src = this.srcEl.value
         try {
-            this.prog = new Comp(src)
+            this.prog = new this.compClass(src)
         } catch (err) {
             if (err instanceof CompError) {
                 alert(`Error on line ${err.line + 1}:\n\t${src.split("\n")[err.line]}\n${err.message}`)
@@ -115,14 +120,20 @@ class CompUI {
         }
         this.binEl.value = this.#bytecodeToStr(this.prog.bytecode)
         if (!this.simUI) {
-            this.simUI = new this.simClass(this.simEl, this.prog)
+            this.simUI = new this.simClass(this.simEl, this.prog, this.instOptions)
             this.expBtnEl.disabled = false
         } else {
             this.simUI.replaceCode(this.prog)
         }
+        this.lsrc = src
     }
 
     async export() {
+        if (this.srcEl.value !== this.lsrc) {
+            if(!window.confirm("Source have been changed since last compilation. Proceed?")) {
+                return
+            }
+        }
         let vhd = await vhdGen.genVHD(this.prog)
         vhdGen.downlaodFile("prog_memory.vhd", vhd)
     }
@@ -138,7 +149,7 @@ class CompUI {
     #bytecodeToStr(c) {
         var o = ""
         for (let i = 0; i < c.length; i++) {      
-            o += Comp.bytecode2bin(c[i]) + "\n"
+            o += this.compClass.bytecode2bin(c[i]) + "\n"
         }
         return o
     }

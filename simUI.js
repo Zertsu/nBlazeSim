@@ -107,10 +107,17 @@ class SimUI {
         }})
         el.replaceWith(changeEl);
         changeEl.select()
+        const vsplt = changeEl.value.split(" ")
+        if(vsplt.length > 1) {
+            changeEl.setSelectionRange(0, vsplt[0].length)
+        }
     }
 
-    genUI(modContents) {
+    genUI(modContents, scratchPadSize = 64, banked = false) {
         const el = {btn: {}, dmem: [], pmem: [], reg: [], stack: []}
+        if (banked) {
+            el.breg = []
+        }
 
         const g = SimUI.htmlGen.bind(this)
 
@@ -156,10 +163,10 @@ class SimUI {
             for (let i = 0; i < len; i++) {
                 const iel = g("div")
                 arr.push(g(
-                    "div", {}, [
+                    "div", {}, prefix !== null ? [
                         g("div", {innerText: prefix + i.toString(base).toUpperCase()}),
                         iel
-                    ]
+                    ] : [iel]
                 ))
                 if(changeName) {
                     iel.addEventListener("click", (ce) => {
@@ -173,7 +180,7 @@ class SimUI {
 
         const genSpec = () => {
             const arr = []
-            for (const e of ["PC", "ZF", "CF", "intEn", "intRq"]) {
+            for (const e of ["PC", "ZF", "CF", "intEn", "intRq", "actRB"]) {
                 const iel = g("div")
                 arr.push(g("div", {}, [
                     g("div", {innerText: e}),
@@ -206,22 +213,23 @@ class SimUI {
 
             g("div", {klass: ["dmemOuter", "tOuter"]}, [
                 g("div", {innerText: "Data Memory"}),
-                g("div", {klass: ["dmem", "tCont"]}, genArr(64, "", el.dmem, undefined, "dmem"))
+                g("div", {klass: ["dmem", "tCont"], style: `--cc: ${scratchPadSize}`}, genArr(scratchPadSize, "", el.dmem, undefined, "dmem"))
             ]),
 
             g("div", {klass: ["regOuter", "tOuter"]}, [
                 g("div", {innerText: "Registers"}),
-                g("div", {klass: ["reg", "tCont"]}, [
+                g("div", {klass: banked ? ["regbanked", "tCont"] : ["reg", "tCont"], style: "--cc: 64"}, [
                     ...genArr(16, "s", el.reg, 16, "reg"),
+                    ...(banked ? genArr(16, null, el.breg, 16, "breg") : []),
                     g("div", {klass: "tHeader", innerText: "Other registers"}),
                     ...genSpec()
 
                 ])
             ]),
 
-            g("div", {klass: ["stackOuter", "tOuter"]}, [
+            g("div", {klass: ["stackOuter", "tOuter"], style: "--cc: 64"}, [
                 g("div", {innerText: "Stack"}),
-                g("div", {klass: ["stack", "tCont"]}, genArr(32, "", el.stack, undefined, "stack"))
+                g("div", {klass: ["stack", "tCont"]}, genArr(32, null, el.stack, undefined, "stack"))
             ]),
     
             g("div", {klass: "simModOuter"}, modContents)
@@ -243,9 +251,23 @@ class SimUI {
         for (let i = 0; i < s.reg.length; i++) {
             el.reg[i].innerText = s.reg[i]
         }
+        if (el.breg) {
+            for (let i = 0; i < s.breg.length; i++) {
+                el.breg[i].innerText = s.breg[i]
+            }
+            el.actRB.innerText = s.actRB ? "B" : "A"
+        }
         for (let i = 0; i < s.stack.length; i++) {
             const stel = el.stack[i]
-            stel.innerText = s.stack[i]
+            if (Array.isArray(s.stack[i])) {
+                if (s.stack[i][4]) {
+                    stel.innerText = `${s.stack[i][0]} ${s.stack[i][1] ? '1' : '0'}${s.stack[i][2] ? '1' : '0'}${s.stack[i][3] ? 'B' : 'A'}`   
+                } else {
+                    stel.innerText = s.stack[i][0]
+                }
+            } else {
+                stel.innerText = s.stack[i]
+            }
             stel.parentElement.style.visibility = "visible"
         }
         for (let i = s.stack.length; i < 32; i++) {

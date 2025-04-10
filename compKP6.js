@@ -1,7 +1,7 @@
 "use strict";
 
-class Comp {
-    static archName = "nblaze"
+class CompKP6 {
+    static archName = "kp6"
 
     static defaultConstBase = 16
     static #regRe = /^s([0-9a-fA-F])$/i
@@ -54,7 +54,7 @@ class Comp {
         return val
     }
     
-    #syorkk(args, kklimit) {
+    #syorkk(args, kklimit, nokk = false) {
         if (args.length !== 2) {
             throw new CompError(`${args.length < 2 ? "Not enough" : "Too many"} arguments`)
         }
@@ -62,7 +62,7 @@ class Comp {
         if (this.regNames[args[0]] != undefined) {
             o |= this.regNames[args[0]] << 8
         } else {
-            const m = args[0].match(Comp.#regRe)
+            const m = args[0].match(CompKP6.#regRe)
             if (!m) {
                 throw new CompError(`Unknown register ${args[0]}`)
             }
@@ -76,7 +76,7 @@ class Comp {
         if (this.regNames[args[1]] != undefined) {
             o |= this.regNames[args[1]] << 4
         } else {
-            const m = args[1].match(Comp.#regRe)
+            const m = args[1].match(CompKP6.#regRe)
             if(m) {
                 const regY = parseInt(m[1], 16)
                 if (regY < 0 || regY > 15) {
@@ -84,6 +84,9 @@ class Comp {
                 }
                 o |= regY << 4
             } else {
+                if (nokk) {
+                    throw new CompError(`Unkown register ${args[1]}`)
+                }
                 o |= this.#parseConst(args[1], kklimit) | 1 << 12
             }
         }
@@ -103,7 +106,7 @@ class Comp {
         if (this.regNames[reg]) {
             o |= this.regNames[reg] << 8
         } else {
-            const m = str.match(Comp.#regRe)
+            const m = str.match(CompKP6.#regRe)
             if (m) {
                 const reg  = parseInt(m[1], 16)
                 if (reg < 0 || reg > 15) {
@@ -141,6 +144,9 @@ class Comp {
                 }
                 o |= 0b000001 << 12
                 break
+            case "l&r":
+                o |= (0b100001 << 12) | this.#opCodes["LOAD"](str)[0]
+                return [o, null]
             case "reti":
                 o |= 0b001001 << 12
                 if(!args[0].match(/^(E|D|(?:ENABLE)|(?:DISABLE))$/i)) {
@@ -190,40 +196,87 @@ class Comp {
         return [o, args[1]]
     }
     
+    #handleRegB(str) {
+        switch (str.trim()) {
+            case "A":
+                return [0b110111 << 12, null]
+            case "B":
+                return [(0b110111 << 12) + 1, null]
+            default:
+                throw new CompError(`Unkown register bank: ${str}`)
+        }
+    }
+
+    #handleoutputK(str) {
+        let o = 0b101011 << 12
+        const args = this.#tokenize(str)
+        if (args.length !== 2) {
+            throw new CompError(`${args.length < 2 ? "Not enough" : "Too many"} arguments`)
+        }
+        return [(0b101011 << 12) | 
+            (this.#parseConst(args[0], 255) << 4) | 
+            (this.#parseConst(args[1], 15)), null]
+    }
+    
+    #handleJAt(opcode, str) {
+        const args = this.#tokenize(str)
+        return [this.#syorkk(args, 0, true) | (opcode << 12), null]
+    }
+
+    #handleHW(str) {
+        const args = this.#tokenize(str)
+        if (args.length !== 1) {
+            throw new CompError(`${args.length < 1 ? "Not enough" : "Too many"} arguments`)
+        }
+        args.push('s8')
+        return [this.#syorkk(args) | (0b010100 << 12), null]
+        
+    }
+
     #opCodes = {
         "LOAD"       : str => this.#handleT(0b000000, str),
-        "INPUT"      : str => this.#handleT(0b001000, str),
-        "FETCH"      : str => this.#handleT(0b001010, str, 63),
-        "OUTPUT"     : str => this.#handleT(0b101100, str),
-        "STORE"      : str => this.#handleT(0b101110, str, 63),
+        "STAR"       : str => this.#handleT(0b010110, str),
         "AND"        : str => this.#handleT(0b000010, str),
         "OR"         : str => this.#handleT(0b000100, str),
         "XOR"        : str => this.#handleT(0b000110, str),
-        "MULT8"      : str => this.#handleT(0b001100, str),
-        "COMP"       : str => this.#handleT(0b011100, str),
-        "COMPARE"    : str => this.#handleT(0b011100, str),
         "ADD"        : str => this.#handleT(0b010000, str),
         "ADDCY"      : str => this.#handleT(0b010010, str),
         "SUB"        : str => this.#handleT(0b011000, str),
         "SUBCY"      : str => this.#handleT(0b011010, str),
-        "SR0"        : str => this.#handleSR(0b1110, str),
-        "SR1"        : str => this.#handleSR(0b1111, str),
-        "SRX"        : str => this.#handleSR(0b1010, str),
-        "SRA"        : str => this.#handleSR(0b1000, str),
-        "RR"         : str => this.#handleSR(0b1100, str),
+        "TEST"       : str => this.#handleT(0b001100, str),
+        "TESTCY"     : str => this.#handleT(0b001110, str),
+        "COMPARE"    : str => this.#handleT(0b011100, str),
+        "COMP"       : str => this.#handleT(0b011100, str),
+        "COMPARECY"  : str => this.#handleT(0b011110, str),
+        "COMPCY"     : str => this.#handleT(0b011110, str),
         "SL0"        : str => this.#handleSR(0b0110, str),
         "SL1"        : str => this.#handleSR(0b0111, str),
         "SLX"        : str => this.#handleSR(0b0100, str),
         "SLA"        : str => this.#handleSR(0b0000, str),
         "RL"         : str => this.#handleSR(0b0010, str),
-        "JUMP"       : str => this.#handleJmp("jump", str),
-        "CALL"       : str => this.#handleJmp("call", str),
-        "RETURN"     : str => this.#handleJmp("return", str),
-        "RETURNI"    : str => this.#handleJmp("reti", str, 1),
+        "SR0"        : str => this.#handleSR(0b1110, str),
+        "SR1"        : str => this.#handleSR(0b1111, str),
+        "SRX"        : str => this.#handleSR(0b1010, str),
+        "SRA"        : str => this.#handleSR(0b1000, str),
+        "RR"         : str => this.#handleSR(0b1100, str),
+        "REGBANK"    : str => this.#handleRegB(str),
+        "INPUT"      : str => this.#handleT(0b001000, str),
+        "OUTPUT"     : str => this.#handleT(0b101100, str),
+        "OUTPUTK"    : str => this.#handleoutputK(str),
+        "STORE"      : str => this.#handleT(0b101110, str, 63),
+        "FETCH"      : str => this.#handleT(0b001010, str, 63),
         "ENINTERR"   : str => this.#handleJmp("eni", str, 0),
-        "ENABLE"     : str => this.#handleJmp("enif", str, 1),
         "DISINTERR"  : str => this.#handleJmp("disi", str, 0),
-        "DISABLE"    : str => this.#handleJmp("disif", str, 1)
+        "ENABLE"     : str => this.#handleJmp("enif", str, 1),
+        "DISABLE"    : str => this.#handleJmp("disif", str, 1),
+        "RETURNI"    : str => this.#handleJmp("reti", str, 1),
+        "JUMP"       : str => this.#handleJmp("jump", str),
+        "JUMP@"      : str => this.#handleJAt(0b100110, str),
+        "CALL"       : str => this.#handleJmp("call", str),
+        "CALL@"      : str => this.#handleJAt(0b100100, str),
+        "RETURN"     : str => this.#handleJmp("return", str),
+        "LOAD&RETURN": str => this.#handleJmp("l&r", str, 2),
+        "HWBUILD"    : str => this.#handleHW(str)
     }
 
     #dirs = {
@@ -333,52 +386,62 @@ class Comp {
     }
 
     #rOpCodes = {
-        0b000001: "LOAD sX, kk",
         0b000000: "LOAD sX, sY",
+        0b000001: "LOAD sX, kk",
+        0b010110: "STAR sX, sY",
+        0b000010: "AND sX, sY",
+        0b000011: "AND sX, kk",
+        0b000100: "OR sX, sY",
+        0b000101: "OR sX, kk",
+        0b000110: "XOR sX, sY",
+        0b000111: "XOR sX, kk",
+        0b010000: "ADD sX, sY",
+        0b010001: "ADD sX, kk",
+        0b010010: "ADDCY sX, sY",
+        0b010011: "ADDCY sX, kk",
+        0b011000: "SUB sX, sY",
+        0b011001: "SUB sX, kk",
+        0b011010: "SUBCY sX, sY",
+        0b011011: "SUBCY sX, kk",
+        0b001100: "TEST sX, sY",
+        0b001101: "TEST sX, kk",
+        0b001110: "TESTCY, sX, sY",
+        0b001111: "TESTCY sX, kk",
+        0b011100: "COMP sX, sY",
+        0b011101: "COMP sX, kk",
+        0b011110: "COMPCY sX, sY",
+        0b011111: "COMPCY sX, kk",
+        0b010100: "SR", // and HWBUILD
+        0b110111: "REGBANK RB",
         0b001001: "INPUT sX, PP",
         0b001000: "INPUT sX, (sY)",
-        0b001011: "FETCH sX, sa",
-        0b001010: "FETCH sX, (sY)",
         0b101101: "OUTPUT sX, PP",
         0b101100: "OUTPUT sX, (sY)",
-        0b101111: "STORE sX, sa",
+        0b101011: "OUTPUTK KKOUT, PKOUT",
         0b101110: "STORE sX, (sY)",
-        0b000011: "AND sX, kk",
-        0b000010: "AND sX, sY",
-        0b000101: "OR sX, kk",
-        0b000100: "OR sX, sY",
-        0b000111: "XOR sX, kk",
-        0b000110: "XOR sX, sY",
-        0b001101: "MULT8 sX, kk",
-        0b001100: "MULT8 sX, sY",
-        0b011101: "COMP sX, kk",
-        0b011100: "COMP sX, sY",
-        0b010001: "ADD sX, kk",
-        0b010000: "ADD sX, sY",
-        0b010011: "ADDCY sX, kk",
-        0b010010: "ADDCY sX, sY",
-        0b011001: "SUB sX, kk",
-        0b011000: "SUB sX, sY",
-        0b011011: "SUBCY sX, kk",
-        0b011010: "SUBCY sX, sY",
-        0b010100: "SR",
+        0b101111: "STORE sX, sa",
+        0b001010: "FETCH sX, (sY)",
+        0b001011: "FETCH sX, sa",
+        0b101000: "INTERR",
         0b100010: "JUMP addr",
         0b110010: "JUMP Z, addr",
         0b110110: "JUMP NZ, addr",
         0b111010: "JUMP C, addr",
         0b111110: "JUMP NC, addr",
+        0b100110: "JUMP@ (sX, sY)",
         0b100000: "CALL addr",
         0b110000: "CALL Z, addr",
         0b110100: "CALL NZ, addr",
         0b111000: "CALL C, addr",
         0b111100: "CALL NC, addr",
+        0b100100: "CALL@ (sX, sY)",
         0b100101: "RETURN",
         0b110001: "RETURN Z",
         0b110101: "RETURN NZ",
         0b111001: "RETURN C",
         0b111101: "RETURN NC",
         0b101001: "RETURNI",
-        0b101000: "INTERR"
+        0b100001: "LD&RET sX, kk",
     }
 
     bytecode2str(code) {
@@ -393,6 +456,10 @@ class Comp {
         const label = this.lineLabels[addr]
         switch (txt) {
             case "SR":
+                if ((code & 0xFF) === 0x80) {
+                    txt = "HWBUILD sX"
+                    break
+                }
                 const c = aluext & 0b111
                 if (aluext & 0b1000) {
                     // SRR
@@ -429,18 +496,13 @@ class Comp {
         txt = txt
             .replace("sX", "s" + sX.toString(16).toUpperCase())
             .replace("sY", "s" + sY.toString(16).toUpperCase())
+            .replace("RB", intEN ? "B" : "A")
+            .replace("KKOUT", (code >> 4) | 0xFF)
+            .replace("PKOUT", code | 0xF)
             .replace("kk", kk)
             .replace("PP", kk)
             .replace("sa", sa)
             .replace("addr", label ? label : addr)
         return txt
-    }
-}
-
-class CompError extends Error {
-    constructor(message, line) {
-        super(message)
-        this.name = "CompError"
-        this.line = line
     }
 }

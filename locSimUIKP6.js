@@ -1,11 +1,12 @@
 "use strict";
 
-class locSimUI extends SimUI {
+class locSimUIKP6 extends SimUI {
     mods = [LedMod, SwitchMod, StackMod, MemMapMod, ParLCDMod]
 
-    constructor(parentElement, prog) {
+    constructor(parentElement, prog, options) {
         super(parentElement, prog)
-        this.sim = new locSim(prog.bytecode, this.#hanPortReq.bind(this))
+        this.instOptions = options
+        this.sim = new locSimKP6(prog.bytecode, this.#hanPortReq.bind(this), options)
         this.runPeriod = 100
         this.lastExec = undefined
         this.actMods = new Set()
@@ -40,7 +41,7 @@ class locSimUI extends SimUI {
             this.scrollIntoView(this.sim)
         }
     }
-    
+
     trigInt() {
         this.sim.trigInt()
         if (!this.running) {
@@ -174,7 +175,7 @@ class locSimUI extends SimUI {
                 const mod = this.mods[i];
                 arr.push(g("option", {value: i, innerText: mod.title}))
             }
-            return arr  
+            return arr
         }
 
         const genSelModOpts = () => {
@@ -231,7 +232,7 @@ class locSimUI extends SimUI {
                     if (this?.sel?.modSel !== undefined) {
                         e.value = this.sel.modSel.value
                     }
-                }}, 
+                }},
                     genModOpt()
                 ),
                 g("div", {klass: "modOpt", after: (e) => sel.modSelOut = e})
@@ -239,7 +240,7 @@ class locSimUI extends SimUI {
             this?.sel?.modsCont === undefined ?
                 g("div", {klass: "modsCont", after: (e) => sel.modsCont = e})
             :   g(this.sel.modsCont, {after: (e) => sel.modsCont = e})
-        ])
+        ], this.instOptions.scratch_pad_memory_size, true)
         this.sel = sel
         genSelModOpts()
     }
@@ -249,75 +250,5 @@ class locSimUI extends SimUI {
         for (const m of this.actMods) {
             m.updateUI()
         }
-    }
-}
-
-
-
-class SimMod {
-    constructor(name, updateHand, hasInt, addrList, span) {
-        this.updateHand = updateHand
-        this.addr = addrList
-        this.hasInt = hasInt
-        this.#genContainer(name, addrList, span)
-    }
-
-    interrupt() {
-        if (this.enInt) {
-            this.updateHand.trigInter()
-        }
-    }
-
-    #delete() {
-        for (let i = 0; i < this.addr.length; i++) {
-            this.addr[i].addr = ""
-        }
-        this.updateHand.delete(this)
-        this.contEl.remove()
-    }
-
-    #genContainer(name, addrList, span) {
-        this.el = {}
-
-        const g = SimUI.htmlGen.bind(this)
-
-        const genAddrList = () => {
-            let o = []
-            for (let i = 0; i < addrList.length; i++) {
-                const add = addrList[i];
-                o.push(g("div", {}, [
-                    g("input", {type: "text", value: add.addr, event: {change: e => {
-                        this.addr[i].addr = e.target.value
-                        this.updateHand.addrUpd(this)
-                    }}}),
-                    g("span", {innerText: add.rw}),
-                    g("span", {innerText: add.desc})
-                ]))
-            }
-            if (this.hasInt) {
-                this.enInt = false
-                o.push(g("div", {klass: "intEnLine"}, [
-                    g("input", {type: "checkbox", event: {change: e => {
-                        this.enInt = e.target.checked
-                    }}}),
-                    g("span", {innerText: "Enable interrupts"})
-                ]))
-            }
-            return o
-        }
-
-        if (!span) {
-            span = {x: 1, y: 1}
-        }
-        const style = `--spanX: ${span.x}; --spanY: ${span.y}`
-
-        this.contEl = g("div", {klass: "modOuter", style: style}, [
-            g("div", {klass: "modHeader"}, [
-                g("div", {innerText: name}),
-                g("input", {type: "button", value: "X", event: e => this.#delete()}),
-                g("div", {klass: "modSel",after: (e) => this.el.addrList = e}, genAddrList())
-            ]),
-            g("div", {klass: "modCont", after: (e) => this.el.modCont = e})
-        ])
     }
 }

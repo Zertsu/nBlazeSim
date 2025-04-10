@@ -1,15 +1,41 @@
 "use strict";
 
+const actnBlazeSimVer = 3
 const compUIList = [];
 const closeHandler = c => compUIList.splice(compUIList.indexOf(c), 1)
 
 document.addEventListener("DOMContentLoaded", function(event){
     const mainCont = document.getElementById("mainCont")
+    document.getElementById("archSelect").addEventListener("change", e => {
+        document.querySelector(".archoptions.active").classList.remove("active")
+        document.getElementById(`${e.target.value}options`).classList.add("active")
+    })
     document.getElementById("newCompBtn").addEventListener("click", e => {
-        compUIList.push(new CompUI(mainCont, locSimUI, false, closeHandler))
+        const arch = document.getElementById("archSelect").value
+        const options = {}
+        document.querySelectorAll(`#${arch}options [name]`).forEach(v => {
+            const k = v.id.slice(v.id.indexOf("_") + 1)
+            switch (v.dataset.parse) {
+                case "int":
+                    options[k] = parseInt(v.value)
+                    break;
+                default:
+                    options[k] = v.value
+                    break;
+            }
+        })
+        switch (arch) {
+            case "nblaze":
+                compUIList.push(new CompUI(mainCont, Comp, locSimUI, options, false, closeHandler, actnBlazeSimVer))
+                break;
+            case "kp6":
+                compUIList.push(new CompUI(mainCont, CompKP6, locSimUIKP6, options, false, closeHandler, actnBlazeSimVer))
+            default:
+                break;
+        }
     })
     document.getElementById("connToHard").addEventListener("click", e => {
-        new CompUI(mainCont, serSimUI, true)
+        new CompUI(mainCont, Comp, serSimUI, null, true)
     })
     document.getElementById("loadBtn").addEventListener("click",async e => {
         loadMng(await vhdGen.getFile())
@@ -52,10 +78,19 @@ function loadMng(toLoad) {
         }
         return
     }
-    if(toLoad?.nBlazeSimVer === 1) {
-        const c = new CompUI(mainCont, locSimUI, false, closeHandler)
-        compUIList.push(c)
-        c.loadState(toLoad)
+    if (toLoad?.nBlazeSimVer === undefined) {
+        return
+    }
+    if(toLoad?.nBlazeSimVer === actnBlazeSimVer) {
+        const arch = {
+            nblaze: [Comp, locSimUI],
+            kp6: [CompKP6, locSimUIKP6]
+        }[toLoad.arch]
+            const c = new CompUI(mainCont, arch[0], arch[1], toLoad.archopts, false, closeHandler, actnBlazeSimVer)
+            compUIList.push(c)
+            c.loadState(toLoad)
+    } else {
+        loadMng(saveConverter.update(toLoad, actnBlazeSimVer))
     }
 }
 

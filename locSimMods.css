@@ -57,3 +57,14 @@
 .stackContent > div {
     visibility: hidden;
 }
+
+/* ParLCD */
+.lcdCont canvas {
+    image-rendering: pixelated;
+    margin-top: 15px;
+    border-radius: 5px;
+}
+
+.lcdCont {
+    text-align: center;
+}

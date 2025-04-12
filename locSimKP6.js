@@ -150,7 +150,7 @@ class locSimKP6 {
                 s.ZF = s.hwbuild === 0
                 return s.hwbuild
             }
-            const msb = 1 << 15
+            const msb = 1 << 7
             const c = code & 0b111
             var oVal = val
             var oCF
@@ -178,7 +178,7 @@ class locSimKP6 {
                     case 0b010: oVal |= val & msb ? 1 : 0   ; break // RL
                     default: break
                 }
-                oVal &= 0xFFFF
+                oVal &= 0xFF
             }
             s.ZF = val == 0
             s.CF = oCF

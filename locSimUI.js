@@ -1,7 +1,7 @@
 "use strict";
 
 class locSimUI extends SimUI {
-    mods = [LedMod, SwitchMod, StackMod, MemMapMod, ParLCDMod]
+    mods = [LedMod, SwitchMod, StackMod, MemMapMod, ParLCDMod, KeyboardMod]
 
     constructor(parentElement, prog) {
         super(parentElement, prog)
@@ -33,6 +33,13 @@ class locSimUI extends SimUI {
         this.updateUI()
     }
 
+    delete() {
+        for (const m of this.actMods) {
+            m.delete()
+        }
+        super.delete()
+    }
+    
     step() {
         if(!this.running) {
             this.sim.runCycle()
@@ -63,6 +70,7 @@ class locSimUI extends SimUI {
                 if (!this.running) {
                     this.lastExec = undefined
                     this.#callbacks.reqUpdate(undefined, true)
+                    this.updateUI()
                     return
                 }
                 if (this.lastExec === undefined) {
@@ -123,14 +131,17 @@ class locSimUI extends SimUI {
             }
         },
         trigInter: e => this.sim.trigInt(),
-        reqUpdate: (e, v) => {
+        reqUpdate: (e, v, s) => {
+            if(s && !this.running) {
+                requestAnimationFrame(t => {e.updateUI.bind(e)})
+                return
+            }
             if (v) {
                 if (e) {
                     this.updsMods.add(e)
                 }
                 if (this.running === false && this.updsMods.size > 0) {
                     const af = t => {
-                        console.log("buu")
                         if (this.updsMods.size === 0 || this.running) {
                             return
                         }
@@ -268,7 +279,7 @@ class SimMod {
         }
     }
 
-    #delete() {
+    delete() {
         for (let i = 0; i < this.addr.length; i++) {
             this.addr[i].addr = ""
         }
@@ -314,7 +325,7 @@ class SimMod {
         this.contEl = g("div", {klass: "modOuter", style: style}, [
             g("div", {klass: "modHeader"}, [
                 g("div", {innerText: name}),
-                g("input", {type: "button", value: "X", event: e => this.#delete()}),
+                g("input", {type: "button", value: "X", event: e => this.delete()}),
                 g("div", {klass: "modSel",after: (e) => this.el.addrList = e}, genAddrList())
             ]),
             g("div", {klass: "modCont", after: (e) => this.el.modCont = e})

@@ -725,3 +725,349 @@ class ParLCDMod extends SimMod {
         ])
     }
 }
+
+
+class KeyboardMod extends SimMod {
+    static title = "Keyboard"
+    static opts = []
+
+    autosTO = null;
+    pressedKeys = new Set()
+
+    constructor(opts, callbacks, state) {
+        super("Keyboard", callbacks, true, [
+            {addr: `10`, rw: "r", desc: "Scancode"}
+        ], {x: 2, y: 2})
+        this.size = opts.size
+        if(state) {
+            this.state = state
+        } else {
+            this.state = {
+                capS: false,
+                capKD: false,
+                capKU: false,
+                eventq: [[0, "Default value"]],
+                asnd: false,
+                asdel: 500,
+                repeat: false
+            }
+        }
+        this.el.modCont.appendChild(this.#genUI())
+        if (this.state.asnd) {
+            this.#autoSend()
+        }
+        document.addEventListener('keydown', this.kdel = (e => {
+            if (this.state.capKD) {
+                e.preventDefault()
+                if (!this.state.repeat && this.pressedKeys.has(e.code)) {
+                    return
+                }
+                if (this.state.capS) {
+                    this.el.capKD.checked = false
+                    this.state.capKD = false
+                }
+                const scancode = KeyboardMod.getkkseq(e.code, true);
+                if (scancode.length !== 0) {
+                    this.#addCodes(scancode, e.key)
+                    this.updateReq = true
+                    if(this.state.asnd) {
+                        this.#autoSend(true)
+                    } else {
+                        this.updateHand.reqUpdate(this, false, true)
+                    }
+                }
+            }
+            this.pressedKeys.add(e.code)
+        }), true);
+        document.addEventListener('keyup', this.kuel = (e => {
+            if (this.state.capKU) {
+                e.preventDefault()
+                if(this.state.capS) {
+                    this.el.capKU.checked = false
+                    this.state.capKU = false
+                }
+                const scancode = KeyboardMod.getkkseq(e.code, false);
+                if (scancode.length !== 0) {
+                    this.#addCodes(scancode, e.key)
+                    this.updateReq = true
+                    if(this.state.asnd) {
+                        this.#autoSend(true)
+                    } else {
+                        this.updateHand.reqUpdate(this, false, true)
+                    }
+                }
+            }
+            this.pressedKeys.delete(e.code)
+        }), true);
+    }
+
+    #addCodes(cc, nm) {
+        if (this.state.eventq.length >= 100) {
+            return
+        }
+        if (nm.length === 1) nm = nm.toLowerCase()
+        for (const [i, e] of cc.entries()) {
+            if (e === 0xF0) {
+                this.state.eventq.push([e, "Breakcode"])
+            } else if(e === 0xE0) {
+                this.state.eventq.push([e, "Extended"])
+            } else if(i === cc.length - 1) {
+                this.state.eventq.push([e, nm])
+            } else {
+                this.state.eventq.push([e, ""])
+            }
+        }
+    }
+
+    delete() {
+        document.removeEventListener("keydown", this.kdel, true)
+        document.removeEventListener("keyup", this.kuel, true)
+        super.delete()
+    }
+
+    reset() {
+        this.state.eventq = [[0, "Default value"]]
+        this.state.actVal = 0
+        this.updateReq = true
+    }
+
+    callbacks = [(rw, data, addr) => {
+        return this.state.eventq[0][0]
+    }]
+
+    #autoSend(upd) {
+        if(!this.autosTO && this.state.eventq.length > 1 && this.state.asnd) {
+            this.#sendEvent()
+            this.updateHand.reqUpdate(this, false, true)
+            this.autosTO = setTimeout(e => {
+                this.autosTO = null
+                this.#autoSend(false)
+            }, this.state.asdel)
+        } else if (upd) {
+            this.updateHand.reqUpdate(this, false, true)
+        }
+    }
+
+    #sendEvent() {
+        if (this.state.eventq.length === 1) {
+            return
+        }
+        this.state.eventq.shift()
+        this.interrupt()
+        this.updateReq = true
+        this.updateHand.reqUpdate(this, false, true)
+    }
+
+    updateUI(force) {
+        if (!this.updateReq && !force) {
+            return
+        }
+        const wEvents = Math.min(this.el.qEls.length, this.state.eventq.length)
+        for (const [i, e] of this.el.qEls.slice(0, wEvents).entries()
+        ) {
+            e.children[0].innerText = this.state.eventq[i][0].toString(16).toUpperCase()
+            e.children[1].innerText = this.state.eventq[i][1]
+        }
+        for (const e of this.el.qEls.slice(wEvents)) {
+            e.children[0].innerText = " "
+            e.children[1].innerText = " "
+        }
+        this.el.mansbtn.disabled = this.state.eventq.length === 1
+        this.updateReq = false
+    }
+
+    #genUI() {
+        const g = SimUI.htmlGen.bind(this)
+        return g("div", {klass: "KBModCont"}, [
+            g("div", {}, [
+                ...(() => {
+                    const o = []
+                for (const t of [
+                    ["capS", "Single mode"],
+                    ["capKD", "Capture keydown"],
+                    ["capKU", "Capture keyup"],
+                ]) {
+                    o.push(g("div", {}, [
+                        g("input", {type: "checkbox", event: {change: (e) => {
+                            this.state[t[0]] = e.target.checked
+                        }}, after: e => {
+                            this.el[t[0]] = e
+                            e.checked = this.state[t[0]]
+                        }}),
+                        g("span", {innerText: t[1]}),
+                    ]))
+                }
+                return o
+            })(),
+            g("div", {}, [
+                g("input", {type: "checkbox", event: {change: (e) => {
+                    this.state.asnd = e.target.checked
+                    this.#autoSend()
+                }}, after: e => {
+                    e.checked = this.state.asnd
+                }}),
+                g("span", {innerText: "Autosend  "}),
+                g("input", {type: "number", event: {change: (e) => {
+                    this.state.asdel = parseInt(e.target.value)
+                }}, after: e => {
+                    e.value = this.state.asdel
+                }})
+            ]),
+            g("div", {}, [
+                g("input", {type: "checkbox", event: {change: (e) => {
+                    this.state.repeat = e.target.checked
+                }}, after: e => {
+                    e.checked = this.state.repeat
+                }}),
+                g("span", {innerText: "Repeat"})
+            ]),
+            g("div", {}, [
+                g("input", {type: "button", value: "Manual Send", event: e => {
+                    this.#sendEvent()
+                }, after: e => {
+                    this.el.mansbtn = e
+                    e.disabled = this.state.eventq.length === 1
+                }}),
+                g("input", {type: "button", value: "Reset queue", event: e => {
+                    this.state.eventq = [[0, "Default value"]]
+                    this.updateReq = true
+                    this.updateHand.reqUpdate(this, false, true)
+                }})
+            ])
+        ]), g("div", {}, [
+            g("div", {innerText: "Event queue:"}),
+            g("div", {klass: "queueCont"},
+                (() => {
+                    this.el.qEls = []
+                    for (let i = 0; i < 5; i++) {
+                        this.el.qEls[i] = g("div", {}, [g("div"), g("div")])
+                    }
+                    return this.el.qEls
+                })())
+            ])
+        ])
+    }
+
+
+    static getkkseq(ec, make) {
+        const el = this.keyCodeToScanCode[ec]
+        if(el === undefined) {
+            return []
+        }
+        if (!Array.isArray(el)) {
+            return make ? [el] : [0xF0, el]
+        }
+        if(!Array.isArray(el[0])) {
+            return make ? el : 
+                [...el.slice(0, -1), 0xF0, el.at(-1)]
+        }
+        return make ? el[0] : el[1]
+    }
+
+    static keyCodeToScanCode = {
+        "Escape": 0x76,
+        "F1": 0x05,
+        "F2": 0x06,
+        "F3": 0x04,
+        "F4": 0x0C,
+        "F5": 0x03,
+        "F6": 0x0B,
+        "F7": 0x83,
+        "F8": 0x0A,
+        "F9": 0x01,
+        "F10": 0x09,
+        "F11": 0x78,
+        "F12": 0x07,
+        // Prt Scr not captured
+        "ScrollLock": 0x7E,
+        "Pause": [[0xE1, 0x14, 0x77, 0xE1, 0xF0, 0x14, 0xE0, 0x77], []],
+        "Backquote": 0x0E,
+        "Digit1": 0x16,
+        "Digit2": 0x1E,
+        "Digit3": 0x26,
+        "Digit4": 0x25,
+        "Digit5": 0x2E,
+        "Digit6": 0x36,
+        "Digit7": 0x3D,
+        "Digit8": 0x3E,
+        "Digit9": 0x46,
+        "Digit0": 0x45,
+        "Minus": 0x4E,
+        "Equal": 0x55,
+        "Backspace": 0x66,
+        "Tab": 0x0D,
+        "KeyQ": 0x15,
+        "KeyW": 0x1D,
+        "KeyE": 0x24,
+        "KeyR": 0x2D,
+        "KeyT": 0x2C,
+        "KeyY": 0x35,
+        "KeyU": 0x3C,
+        "KeyI": 0x43,
+        "KeyO": 0x44,
+        "KeyP": 0x4D,
+        "BracketLeft": 0x54,
+        "BracketRight": 0x5B,
+        "Backslash": 0x5D,
+        "CapsLock": 0x58,
+        "KeyA": 0x1C,
+        "KeyS": 0x1B,
+        "KeyD": 0x23,
+        "KeyF": 0x2B,
+        "KeyG": 0x34,
+        "KeyH": 0x33,
+        "KeyJ": 0x3B,
+        "KeyK": 0x42,
+        "KeyL": 0x4B,
+        "Semicolon": 0x4C,
+        "Quote": 0x52,
+        "Enter": 0x5A,
+        "ShiftLeft": 0x12,
+        "KeyZ": 0x1A,
+        "KeyX": 0x22,
+        "KeyC": 0x21,
+        "KeyV": 0x2A,
+        "KeyB": 0x32,
+        "KeyN": 0x31,
+        "KeyM": 0x3A,
+        "Comma": 0x41,
+        "Period": 0x49,
+        "Slash": 0x4A,
+        "ShiftRight": 0x59,
+        "ControlLeft": 0x14,
+        "MetaLeft": [0xE0, 0x1F],
+        "AltLeft": 0x11,
+        "Space": 0x29,
+        "AltRight": [0xE0, 0x11],
+        "MetaRight": [0xE0, 0x27],
+        "ContextMenu": [0xE0, 0x2F],
+        "ControlRight": [0xE0, 0x14],
+        "Insert": [0xE0, 0x70],
+        "Home": [0xE0, 0x6C],
+        "PageUp": [0xE0, 0x7D],
+        "Delete": [0xE0, 0x71],
+        "End": [0xE0, 0x69],
+        "PageDown": [0xE0, 0x7A],
+        "ArrowUp": [0xE0, 0x75],
+        "ArrowLeft": [0xE0, 0x6B],
+        "ArrowDown": [0xE0, 0x72],
+        "ArrowRight": [0xE0, 0x74],
+        "NumLock": 0x77,
+        "NumpadDivide": [0xE0, 0x4A],
+        "NumpadMultiply": 0x7C,
+        "NumpadSubtract": 0x7B,
+        "Numpad7": 0x6C,
+        "Numpad8": 0x75,
+        "Numpad9": 0x7D,
+        "NumpadAdd": 0x79,
+        "Numpad4": 0x6B,
+        "Numpad5": 0x73,
+        "Numpad6": 0x74,
+        "Numpad1": 0x69,
+        "Numpad2": 0x72,
+        "Numpad3": 0x7A,
+        "Numpad0": 0x70,
+        "NumpadDecimal": 0x71,
+        "NumpadEnter": [0xE0, 0x5A]
+    }
+}

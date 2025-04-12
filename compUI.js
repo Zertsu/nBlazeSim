@@ -31,6 +31,11 @@ class CompUI {
         this.simUI.el.freqIn.value = s.debug.timescale
         this.simUI.setRunFreq(s.debug.timescale)
 
+        this.simUI.breakPoints.clear()
+        for (const e of this.simUI.el.pmemPar.querySelectorAll("input:checked")) {
+            e.checked = false
+        }
+
         for (let i = 0; i < s.debug.brakepoints.length; i++) {
             const bp = s.debug.brakepoints[i];
             this.simUI.el.pmem[bp].getElementsByTagName("input")[0].checked = true
@@ -59,6 +64,7 @@ class CompUI {
             }
             if (m.enInt !== undefined) {
                 addrEl[addrEl.length - 1].checked = m.enInt
+                mod.enInt = m.enInt
             }
             mod.updateUI(true)
         }

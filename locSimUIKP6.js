@@ -1,7 +1,7 @@
 "use strict";
 
 class locSimUIKP6 extends SimUI {
-    mods = [LedMod, SwitchMod, StackMod, MemMapMod, ParLCDMod]
+    mods = [LedMod, SwitchMod, StackMod, MemMapMod, ParLCDMod, KeyboardMod]
 
     constructor(parentElement, prog, options) {
         super(parentElement, prog)
@@ -34,6 +34,13 @@ class locSimUIKP6 extends SimUI {
         this.updateUI()
     }
 
+    delete() {
+        for (const m of this.actMods) {
+            m.delete()
+        }
+        super.delete()
+    }
+
     step() {
         if(!this.running) {
             this.sim.runCycle()
@@ -64,6 +71,7 @@ class locSimUIKP6 extends SimUI {
                 if (!this.running) {
                     this.lastExec = undefined
                     this.#callbacks.reqUpdate(undefined, true)
+                    this.updateUI()
                     return
                 }
                 if (this.lastExec === undefined) {
@@ -124,14 +132,17 @@ class locSimUIKP6 extends SimUI {
             }
         },
         trigInter: e => this.sim.trigInt(),
-        reqUpdate: (e, v) => {
+        reqUpdate: (e, v, s) => {
+            if(s && !this.running) {
+                requestAnimationFrame(t => {e.updateUI()})
+                return
+            }
             if (v) {
                 if (e) {
                     this.updsMods.add(e)
                 }
                 if (this.running === false && this.updsMods.size > 0) {
                     const af = t => {
-                        console.log("buu")
                         if (this.updsMods.size === 0 || this.running) {
                             return
                         }

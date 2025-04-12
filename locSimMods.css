@@ -68,3 +68,38 @@
 .lcdCont {
     text-align: center;
 }
+
+
+/* Keybaord */
+.KBModCont {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
+
+.KBModCont input[type="number"] {
+    width: 50px;
+}
+
+.KBModCont .queueCont {
+    display: grid;
+    grid-template-rows: repeat(6, 1fr);
+    height: 100%;
+}
+
+.KBModCont .queueCont > * {
+    background-color: #c9c9b1
+}
+
+.KBModCont .queueCont > :first-child {
+    background-color: #b1b19c
+}
+
+.KBModCont .queueCont > div {
+    display: grid;
+    grid-template-columns: 1fr 4fr;
+}
+
+.KBModCont .queueCont > div > div {
+    margin-top: 1px;
+    padding-left: 2px;
+}

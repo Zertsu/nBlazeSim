@@ -11,7 +11,7 @@ class saveConverter {
         }),
         2: (e => {
             e.nBlazeSimVer = 3
-            if(e.arch == "kp6") {
+            if(e.arch == "kp6" && e.sim) {
                 e.sim.stack = e.sim.stack.map(el => {
                     return [el - 1, false, false, false, false]
                 })
